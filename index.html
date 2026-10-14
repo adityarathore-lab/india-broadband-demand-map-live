@@ -1,0 +1,1049 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>India Homes Grid</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
+<style>
+/* Layout: fixed left rail (totals + city list) and a full-height map; rail becomes a top drawer on phones. */
+:root{
+  --bg:#F7F3EA; --panel:#FFFDF8; --ink:#1B1915; --muted:#6E675C; --line:#DCD4C4; --soft:#EFE8DA;
+  --accent:#C8102E; --accent-ink:#8E0B20;
+  --s1:#EFD3B8; --s2:#EDB07C; --s3:#E8884F; --s4:#D5502B; --s5:#9E1D1D; --s6:#4D0F12;
+  --g1:#E4E0D6; --g2:#D9A77A; --g3:#C8102E; --g4:#5A1120;
+  --st-ws:#C8102E; --st-new:#E8884F; --st-share:#3B6EA8; --st-dens:#B9B1A3; --ok:#DFF0DC; --warn:#F3E6C2; --bad:#F6C9C9;
+  --sea:#DCE5E8; --land:#F4EFE5; --land-out:#E7E2D8; --border:#B8AE9C; --road:#DCD1BF; --road-major:#C7B59B; --water:#BCD3E0; --rail:#A99F8E;
+  --display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --body:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono:"SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#141210; --panel:#1C1915; --ink:#F1ECE2; --muted:#A79F91; --line:#3B362D; --soft:#262219;
+  --accent:#FF4D5E; --accent-ink:#FF8A94;
+  --s1:#2A1F1A; --s2:#5A2E22; --s3:#8E3F28; --s4:#C7532E; --s5:#EE7A4B; --s6:#FFB07A;
+  --g1:#2E2A24; --g2:#7A4A33; --g3:#E24A5A; --g4:#FFB4BC; --st-ws:#FF4D5E; --st-new:#EE7A4B; --st-share:#7FA6E0; --st-dens:#5E574D; --sea:#11181C; --land:#1E1B17; --land-out:#171513; --border:#4A443A; --road:#35302A; --road-major:#4D4539; --water:#1D3340; --rail:#5A5246; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#141210; --panel:#1C1915; --ink:#F1ECE2; --muted:#A79F91; --line:#3B362D; --soft:#262219;
+  --accent:#FF4D5E; --accent-ink:#FF8A94;
+  --s1:#2A1F1A; --s2:#5A2E22; --s3:#8E3F28; --s4:#C7532E; --s5:#EE7A4B; --s6:#FFB07A;
+  --g1:#2E2A24; --g2:#7A4A33; --g3:#E24A5A; --g4:#FFB4BC; --st-ws:#FF4D5E; --st-new:#EE7A4B; --st-share:#7FA6E0; --st-dens:#5E574D; --sea:#11181C; --land:#1E1B17; --land-out:#171513; --border:#4A443A; --road:#35302A; --road-major:#4D4539; --water:#1D3340; --rail:#5A5246; color-scheme:dark }
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--body)}
+#app{display:grid;grid-template-columns:340px 1fr;height:100%;min-height:0}
+#rail{display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);background:var(--panel);overflow:hidden}
+#railhead{padding:16px 16px 10px;border-bottom:1px solid var(--line)}
+h1{font:600 24px/1.1 var(--display);margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:12px;margin:0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.tile{background:var(--soft);border-radius:6px;padding:8px 10px;min-width:0}
+.tile b{display:block;font:600 18px/1.1 var(--mono);font-variant-numeric:tabular-nums}
+.tile span{display:block;font-size:11px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-top:3px}
+#tools{display:flex;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line);align-items:center}
+#tools input{flex:1;min-width:0;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+#tools select{padding:7px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+#tools input:focus,#tools select:focus,button:focus-visible,.row:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#list{overflow:auto;flex:1;min-height:0}
+.row{display:grid;grid-template-columns:28px 1fr auto;gap:8px;align-items:baseline;padding:7px 16px;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;color:inherit;font:inherit}
+.row:hover{background:var(--soft)} .row .rk{color:var(--muted);font:12px var(--mono)} .row .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm small{color:var(--muted);font-size:11px;margin-left:4px} .row .v{font:13px var(--mono);font-variant-numeric:tabular-nums}
+.row .v i{font-style:normal;color:var(--muted);font-size:11px;margin-left:4px}
+#foot{padding:10px 16px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.4}
+#foot a{color:inherit}
+#mapwrap{position:relative;min-width:0;min-height:0}
+#map{position:absolute;inset:0;background:var(--sea)}
+#cityhead{position:absolute;top:12px;left:12px;right:60px;z-index:1000;display:flex;flex-wrap:wrap;gap:8px;align-items:center;pointer-events:none}
+#cityhead>*{pointer-events:auto}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.chip b{font:600 13px var(--mono);font-variant-numeric:tabular-nums}
+button.chip{cursor:pointer;color:var(--ink);font-family:inherit}
+select.chip{cursor:pointer;color:var(--ink);font-family:inherit;max-width:180px}
+button.chip:hover{background:var(--soft)}
+.chip.title{font:600 16px/1.2 var(--display)}
+.chip.flag{border-color:var(--accent);color:var(--accent-ink)}
+#metric{display:flex;gap:0;padding:0;overflow-x:auto;overflow-y:hidden;max-width:100%;scrollbar-width:thin}
+#metric label{padding:6px 10px;cursor:pointer;border-right:1px solid var(--line);font-size:12px;white-space:nowrap;flex:0 0 auto}
+#metric label:last-child{border-right:0}
+#metric input{position:absolute;opacity:0;width:0;height:0}
+#metric label.on{background:var(--accent);color:#fff}
+#legend{position:absolute;bottom:22px;left:12px;z-index:1000;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:11px;box-shadow:0 1px 4px rgba(0,0,0,.08);max-width:calc(100% - 24px)}
+#legend .t{font-weight:600;margin-bottom:4px}
+#legend .sw{display:flex;gap:2px;margin:4px 0}
+#legend .sw i{display:block;height:10px;flex:1;min-width:18px}
+#legend .lab{display:flex;justify-content:space-between;font:10px var(--mono);color:var(--muted)}
+#note{position:absolute;bottom:22px;right:12px;z-index:1000;font-size:11px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-marker-shadow,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;font:inherit;-webkit-tap-highlight-color:transparent}
+.leaflet-container img.leaflet-tile{max-width:none!important;max-height:none!important;width:auto;padding:0;user-select:none;-webkit-user-drag:none}
+.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-zoom-box{width:0;height:0;box-sizing:border-box;z-index:800}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-shadow-pane{z-index:500}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane canvas{z-index:100}.leaflet-map-pane svg{z-index:200}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}
+.leaflet-right .leaflet-control{float:right}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-left .leaflet-control{margin-left:10px}.leaflet-right .leaflet-control{margin-right:10px}
+.leaflet-zoom-animated{transform-origin:0 0}.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab,.leaflet-dragging .leaflet-grab .leaflet-interactive{cursor:grabbing}
+.leaflet-bar{box-shadow:0 1px 5px rgba(0,0,0,.18);border-radius:4px;overflow:hidden}
+.leaflet-bar a{display:block;width:30px;height:30px;line-height:30px;text-align:center;text-decoration:none;font:bold 18px var(--mono);background:var(--panel);color:var(--ink);border-bottom:1px solid var(--line)}
+.leaflet-bar a:last-child{border-bottom:0}.leaflet-bar a.leaflet-disabled{color:var(--muted)}
+.leaflet-control-attribution{background:var(--panel);color:var(--muted);margin:0;font-size:10px;padding:0 5px;opacity:.9}
+.leaflet-control-attribution a{color:inherit}
+.leaflet-tooltip{position:absolute;padding:5px 8px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:4px;white-space:nowrap;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.15);font-size:12px;line-height:1.35}
+.leaflet-tooltip b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.leaflet-fade-anim .leaflet-tile{will-change:opacity}
+.loclabel{background:var(--panel);border:1px solid var(--line);border-radius:3px;padding:1px 5px;font:600 11px var(--body);color:var(--ink);white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.15);pointer-events:none;opacity:.92}
+.loclabel.big{font-size:12px}
+#rail .row.loc{grid-template-columns:1fr auto auto} #rail .row .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:0}
+#rail .row.loc .v2{font:12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+#railmode{padding:8px 16px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);display:none;align-items:center;gap:8px}
+#railmode b{color:var(--ink)}
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  #rail{border-right:0;border-bottom:1px solid var(--line);max-height:46vh}
+  #list{max-height:22vh}
+  .tiles{grid-template-columns:repeat(4,1fr)} .tile b{font-size:15px}
+  #cityhead{right:12px}
+}
+
+#topbar{display:flex;gap:4px;align-items:center;padding:6px 16px;border-bottom:1px solid var(--line);background:var(--panel);height:42px;box-sizing:border-box}
+#topbar{overflow-x:auto;scrollbar-width:none} #topbar button{white-space:nowrap;flex:0 0 auto;padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+#topbar button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+#topbar .t{font:600 14px var(--display);margin-right:10px}
+#topbar .kv{margin:0 0 0 auto}
+#app{height:calc(100% - 42px)}
+body[data-tab="data"] #app,body[data-tab="params"] #app,body[data-tab="invest"] #app{display:none}
+#dataview,#paramview{display:none;height:calc(100% - 42px);overflow:auto;padding:14px 16px;box-sizing:border-box}
+body[data-tab="data"] #dataview{display:block} body[data-tab="params"] #paramview{display:block}
+.crumbs{font-size:13px;margin-bottom:6px} .crumbs a{color:var(--accent-ink);cursor:pointer;text-decoration:underline}
+.dtools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0 10px} .dtools input{padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;min-width:200px}
+.dtools button{padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table.dt{border-collapse:collapse;width:100%;font-size:12.5px;min-width:900px}
+table.dt th,table.dt td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+table.dt th{position:sticky;top:0;background:var(--soft);cursor:pointer;font-weight:600;user-select:none;z-index:1}
+table.dt th.l,table.dt td.l{text-align:left}
+table.dt tr.tot td{font-weight:600;background:var(--soft)}
+table.dt tr.click{cursor:pointer} table.dt tr.click:hover td{background:var(--soft)}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;background:var(--soft);border:1px solid var(--line)}
+.kv{color:var(--muted);font-size:12px;margin:0 0 10px}
+details.defs{margin:0 0 10px;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:6px 12px;font-size:12.5px}
+details.defs summary{cursor:pointer;font-weight:600;padding:4px 0}
+details.defs dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;margin:8px 0 4px;max-width:1100px}
+details.defs dt{font-weight:600;white-space:nowrap} details.defs dd{margin:0;line-height:1.45}
+@media (max-width:760px){ details.defs dl{grid-template-columns:1fr} details.defs dt{margin-top:6px} }
+.ins{margin:0 0 10px;border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:6px;background:var(--panel);padding:10px 14px;font-size:13px}
+.ins h3{font:600 14px var(--display);margin:0 0 6px} .ins ul{margin:0;padding-left:18px;max-width:1100px} .ins li{margin:3px 0;line-height:1.45}
+.ins b{font-family:var(--mono);font-variant-numeric:tabular-nums} .ins .muted{color:var(--muted)}
+table.dt td.wrap{white-space:normal;min-width:240px;max-width:360px;line-height:1.35}
+.badge.v-new{background:#FBE3C9;border-color:#E8884F;color:#1B1915} .badge.v-build{background:#F6C9C9;border-color:#C8102E;color:#1B1915} .badge.v-fill{background:#F3E6C2;border-color:#C9A14A;color:#1B1915}
+.badge.v-switch{background:#DCE8F7;border-color:#5B8DD6;color:#1B1915} .badge.v-hold{background:#DFF0DC;border-color:#5FA85A;color:#1B1915} .badge.v-watch,.badge.v-small{opacity:.75}
+#paramview h2{font:600 18px var(--display);margin:16px 0 6px} #paramview h2:first-child{margin-top:0}
+#paramview table.dt{min-width:760px} #paramview table.dt td{white-space:normal;text-align:left;vertical-align:top;line-height:1.4} #paramview table.dt th{text-align:left;cursor:default}
+#paramview .lead{max-width:70ch;margin:0 0 8px}
+@media (max-width:760px){ #topbar{padding:6px 10px} #topbar .kv{display:none} #dataview,#paramview{padding:10px} }
+@media (max-width:440px){ #topbar .t{display:none} #topbar button{padding:6px 9px} }
+
+body[data-tab="invest"] #app{display:none}
+#investview{display:none;height:calc(100% - 42px);overflow:auto;box-sizing:border-box}
+body[data-tab="invest"] #investview{display:block}
+.inv{max-width:1180px;margin:0 auto;padding:30px 24px 70px}
+.inv-hero{display:grid;grid-template-columns:1.15fr 1fr;gap:32px;align-items:end;padding:6px 0 26px;border-bottom:1px solid var(--line)}
+.inv-kicker{font:600 11px var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink)}
+.inv h1{font:600 42px/1.04 var(--display);letter-spacing:-.022em;margin:10px 0 14px;text-wrap:balance}
+.inv-lead{font-size:15.5px;line-height:1.55;max-width:62ch;margin:0}
+.inv-lead b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 16px 13px;min-width:0}
+.kpi b{display:block;font:600 clamp(18px,2vw,27px)/1 var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em;white-space:nowrap}
+.kpi span{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:8px}
+.kpi small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.35}
+.kpi.hi{background:var(--accent);border-color:var(--accent);color:#fff} .kpi.hi span,.kpi.hi small{color:rgba(255,255,255,.8)}
+.inv section{padding:34px 0 10px;border-bottom:1px solid var(--line)}
+.inv section:last-child{border-bottom:0}
+.inv h2{font:600 25px/1.15 var(--display);letter-spacing:-.012em;margin:0 0 6px}
+.inv .sub{font-size:13.5px;color:var(--muted);max-width:76ch;margin:0 0 18px;line-height:1.5}
+.inv .sub b{color:var(--ink);font-family:var(--mono);font-weight:600}
+.inv p{font-size:13.5px;line-height:1.55;max-width:76ch}
+.mixbar{display:flex;height:36px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--soft)}
+.mixbar i{display:block;height:100%;position:relative}
+.mixbar i span{position:absolute;left:10px;top:50%;transform:translateY(-50%);font:600 12px var(--mono);color:#fff;white-space:nowrap}
+.mixleg{display:flex;flex-wrap:wrap;gap:10px 24px;margin:12px 0 0;font-size:12.5px;color:var(--muted)}
+.mixleg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+.mixleg b{color:var(--ink);font-family:var(--mono);font-weight:600}
+.c-ws{background:var(--st-ws)} .c-new{background:var(--st-new)} .c-share{background:var(--st-share)} .c-dens{background:var(--st-dens)}
+.chart{width:100%;height:auto;display:block;font-family:var(--body)}
+.chart .lbl{font-size:12.5px;fill:var(--ink)} .chart .val{font-size:12px;fill:var(--muted);font-family:var(--mono)} .chart .sub{fill:var(--muted);font-size:10.5px}
+.chart .f-ws{fill:var(--st-ws)} .chart .f-new{fill:var(--st-new)} .chart .f-share{fill:var(--st-share)}
+table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700} .chart .f-acc{fill:var(--accent)} .chart .f-soft{fill:var(--soft)}
+.chart .tchip{fill:var(--soft);stroke:var(--line)} .chart .tchip.t1{fill:var(--accent);stroke:var(--accent)} .chart .tchip.t2{fill:var(--s3);stroke:var(--s3)}
+.chart .tlab{font:600 10px var(--mono);fill:var(--ink)} .chart .tlab.t1{fill:#fff} .chart .tlab.t2{fill:#1B1915}
+.chart .grid{stroke:var(--line);stroke-dasharray:2 3}
+.chart .click{cursor:pointer} .chart .click:hover .lbl{fill:var(--accent-ink);text-decoration:underline}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px;font-size:13px;line-height:1.5;min-width:0}
+.card h4{font:600 14.5px var(--display);margin:0 0 6px} .card .tag{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);font-weight:600;display:block;margin-bottom:6px}
+.inv table.dt{min-width:0;font-size:12.5px} .inv .tablewrap{margin:0 0 12px} .inv table.src td{white-space:normal;vertical-align:top;line-height:1.4;max-width:34ch}
+.inv table.dt th{cursor:default}
+.tier{display:inline-block;min-width:22px;text-align:center;padding:2px 7px;border-radius:999px;font:600 11px var(--mono);border:1px solid var(--line)}
+.tier.t1{background:var(--accent);color:#fff;border-color:var(--accent)} .tier.t2{background:var(--s3);color:#1B1915;border-color:var(--s3)} .tier.t3{background:var(--soft)} .tier.t4{color:var(--muted)}
+.bar{position:relative;display:inline-block;width:96px;height:8px;background:var(--soft);border-radius:4px;vertical-align:middle;margin-right:8px} .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--accent)} .bar.m i{background:var(--st-share)}
+.wts{display:flex;height:26px;border-radius:7px;overflow:hidden;border:1px solid var(--line);margin:4px 0 8px} .wts i{display:block;height:100%;font:600 11px var(--mono);color:#fff;text-align:center;line-height:26px}
+.heat{display:grid;grid-template-columns:140px repeat(3,1fr);gap:5px;max-width:620px}
+.heat div{padding:11px 8px;border-radius:7px;text-align:center;font:600 14px var(--mono);color:#1B1915} .heat .h{font:600 10.5px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:none;padding:6px 4px;text-align:center} .heat .r{font:600 12px var(--body);color:var(--ink);background:none;text-align:left;padding-left:0}
+.heat .ok{background:var(--ok)} .heat .warn{background:var(--warn)} .heat .bad{background:var(--bad)}
+.formula{font:15px var(--mono);background:var(--soft);padding:12px 16px;border-radius:9px;display:inline-block;margin:4px 0 12px}
+.callout{border:1px solid var(--line);border-left:4px solid var(--accent);background:var(--panel);border-radius:9px;padding:12px 16px;font-size:13.5px;line-height:1.5;max-width:80ch}
+.inv .tiny{font-size:11.5px;color:var(--muted)}
+.inv a.act{color:var(--accent-ink);cursor:pointer;text-decoration:underline;font-size:12px}
+.inv button.ghost{padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);font:inherit;cursor:pointer}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:28px} .twocol>div{min-width:0}
+.check{list-style:none;padding:0;margin:0} .check li{padding:5px 0 5px 26px;position:relative;font-size:13px;line-height:1.45} .check li:before{content:"";position:absolute;left:0;top:8px;width:14px;height:14px;border:1.5px solid var(--line);border-radius:4px}
+.rs{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:0 0 12px;background:var(--panel)} .rs h3{font:600 17px var(--display);margin:0 0 6px} .rs .v{display:inline-block;padding:1px 7px;border-radius:4px;font:600 10.5px var(--mono);margin-right:4px}
+.rs .v.confirmed{background:var(--ok);color:#1B1915} .rs .v.corrected{background:var(--warn);color:#1B1915} .rs .v.refuted{background:var(--bad);color:#1B1915} .rs .v.unverified{border:1px solid var(--line)}
+@media (max-width:1000px){ .cards{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:900px){ .inv-hero{grid-template-columns:1fr} .inv h1{font-size:31px} .twocol{grid-template-columns:1fr} .heat{grid-template-columns:90px repeat(3,1fr)} }
+@media (max-width:600px){ .cards{grid-template-columns:1fr} }
+@media (max-width:760px){ .inv{padding:20px 16px 50px} .kpis{grid-template-columns:repeat(2,1fr)} .kpi b{font-size:22px} }
+
+.toc{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:10px 0 10px;margin:0 0 4px;background:var(--bg);border-bottom:1px solid var(--line);scrollbar-width:thin}
+.toc a{flex:0 0 auto;padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:12px;cursor:pointer;color:var(--ink);background:var(--panel);white-space:nowrap}
+.toc a:hover{border-color:var(--accent);color:var(--accent-ink)}
+.inv section{scroll-margin-top:56px}
+.answers{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.ans{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px 13px 52px;min-width:0}
+.ans .n,.rec .n{position:absolute;left:15px;top:14px;width:25px;height:25px;border-radius:50%;background:var(--accent);color:#fff;font:600 12.5px/25px var(--mono);text-align:center}
+.ans h4{font:600 15px/1.3 var(--display);margin:0 0 6px} .ans p{margin:0;font-size:13px;line-height:1.55}
+.ans p b{font-family:var(--mono);font-weight:600}
+.kpis.k4{grid-template-columns:repeat(4,1fr);margin:0 0 18px}
+h4.ch{font:600 15px var(--display);margin:0 0 8px}
+.legend-inline{font:400 11.5px var(--body);color:var(--muted);margin-left:8px} .legend-inline i,.sw-inline{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 4px 0 8px;vertical-align:-1px}
+ul.plain{margin:0;padding-left:18px} ul.plain li{margin:0 0 7px;font-size:13px;line-height:1.5}
+.fun{display:grid;grid-template-columns:190px 1fr 86px;gap:10px;align-items:center;margin:0 0 9px;font-size:12.5px}
+.fun .fb{height:20px;background:var(--soft);border-radius:4px;overflow:hidden} .fun .fb i{display:block;height:100%;border-radius:4px}
+.fun .fv{font:600 12.5px var(--mono);text-align:right}
+.cards.c3{grid-template-columns:repeat(3,1fr)}
+.card p{margin:0 0 8px;font-size:13px;line-height:1.5}
+.card.bc .bch{display:flex;justify-content:space-between;align-items:center} .card.bc h4{margin:0}
+.card.bc dl{display:grid;grid-template-columns:118px 1fr;gap:6px 10px;margin:10px 0 0;font-size:12.5px;line-height:1.45}
+.card.bc dt{color:var(--muted);font-weight:600} .card.bc dd{margin:0}
+.recs{display:grid;gap:10px}
+.rec{position:relative;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:13px 16px 11px 52px}
+.rec h4{font:600 15px var(--display);margin:0 0 4px} .rec p{margin:0;font-size:13px;line-height:1.5}
+details.rs{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:0 0 10px;background:var(--panel)}
+details.rs summary{cursor:pointer;font-size:14px;line-height:1.8} details.rs p{font-size:13px;line-height:1.55;max-width:90ch}
+.v{display:inline-block;padding:1px 7px;border-radius:4px;font:600 10.5px var(--mono);margin-right:3px;border:1px solid transparent;vertical-align:1px}
+.v.confirmed{background:var(--ok);color:#1B1915} .v.corrected{background:var(--warn);color:#1B1915} .v.refuted{background:var(--bad);color:#1B1915} .v.unverified{border-color:var(--line)} .v.notchecked{border-color:var(--line);color:var(--muted)}
+.chart .f-share{fill:var(--st-share)}
+table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700}
+@media (max-width:1000px){ .cards.c3{grid-template-columns:repeat(2,1fr)} .kpis.k4{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:760px){ .answers{grid-template-columns:1fr} .cards.c3{grid-template-columns:1fr} .fun{grid-template-columns:120px 1fr 70px} .card.bc dl{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ .leaflet-zoom-anim .leaflet-zoom-animated{transition:none} }
+</style>
+
+<nav id="topbar"><span class="t">India Homes Grid</span><button type="button" data-tab="invest" class="on">Overview and plan</button><button type="button" data-tab="map">Map</button><button type="button" data-tab="data">Data</button><button type="button" data-tab="params">Parameters</button><span class="kv">Free public data &middot; observed and modelled marked everywhere</span></nav>
+<div id="app">
+  <aside id="rail">
+    <div id="railhead">
+      <h1>India Homes Grid</h1>
+      <p class="sub">Homes per 100 m square in the 100 largest cities, from satellite building traces and the population grid. Built 2026-10-13 from free data.</p>
+    </div>
+    <div class="tiles" id="tiles"></div>
+    <div id="tools">
+      <input id="q" type="search" placeholder="Find a city" aria-label="Find a city">
+      <select id="sort" aria-label="Sort cities">
+        <option value="homes">by homes</option>
+        <option value="growth_pct">by growth</option>
+        <option value="new_cells">by new squares</option>
+        <option value="rank">by 2011 rank</option>
+        <option value="wired_share_pct">by wired share (low first)</option>
+        <option value="mlab_dl_mbps">by M-Lab speed (slow first)</option>
+        <option value="wired_share_change_since_apr25_pt">by wired share change since Apr 2025</option>
+        <option value="wired_devices_per_100_homes">by wired-test devices per 100 homes (low first)</option>
+      </select>
+    </div>
+    <div id="railmode"><span>Localities in <b id="railcity"></b></span><select id="locsort" aria-label="Sort localities"><option value="homes">by homes</option><option value="new3y">by new growth</option><option value="wired_pct">by wired share</option><option value="unwired">by unwired homes</option><option value="newshare">by new share</option><option value="buildings">by buildings</option></select></div>
+    <div id="list" role="list"></div>
+    <div id="foot">Homes = people &divide; state household size; people 2025 are modelled (GHSL, EU JRC, projected from 2018 imagery). Buildings are observed (Google Open Buildings, 2023). Squares of 100 m, shown here summed to 500 m. Two cities use buildings &times; 1.1 because the population grid under-counts them. Satellite towns share squares with their metro. Wired-line signal = Ookla open data, Jul&ndash;Sep 2026, 600 m tiles, free to study, Ookla licence for commercial use. M-Lab = public statistics by city (IP location), 2023 to 26 Mar 2024, where the public files stop.</div>
+  </aside>
+  <div id="mapwrap">
+    <div id="map" role="application" aria-label="Map"></div>
+    <div id="cityhead"></div>
+    <div id="legend"></div>
+  </div>
+</div>
+
+<section id="dataview"><div id="dcrumbs" class="crumbs"></div><div id="dtools" class="dtools"></div><details id="ddefs" class="defs"></details><div id="dins" class="ins" hidden></div><div id="dtable" class="tablewrap"></div></section>
+<section id="paramview"><div id="pcontent"></div></section>
+<section id="investview"><div class="inv" id="invcontent"></div></section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+  document.body.setAttribute('data-tab','invest');
+  var INDEX=null, cities=[], map, baseLayer, cityLayer=null, cellLayer=null, labelLayer=null, hiLayer=null, current=null, metric='homes', tileFails=0;
+  var $=function(s){return document.querySelector(s)}; var css=function(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()};
+  function fmtIN(n){ n=+n||0; if(n>=1e7) return (n/1e7).toFixed(2).replace(/\.?0+$/,'')+' cr'; if(n>=1e5) return (n/1e5).toFixed(1).replace(/\.0$/,'')+' L'; return n.toLocaleString('en-IN'); }
+  function fmt(n){ return (+n||0).toLocaleString('en-IN'); }
+  function pct(n){ return (n>0?'+':'')+(+n).toFixed(1)+'%'; }
+
+  map=L.map('map',{preferCanvas:true,zoomControl:true,attributionControl:true,worldCopyJump:false}).setView([22.5,80],5);
+  /* our own map background: no outside map server, so the page looks the same on the local server and in Claude */
+  map.createPane('basemap'); map.getPane('basemap').style.zIndex=250; map.getPane('basemap').style.pointerEvents='none';
+  var baseRenderer=L.canvas({pane:'basemap',padding:0.5}), indiaLayer=null, roadLayer=null, BASE={};
+  map.attributionControl.addAttribution('Map data &copy; OpenStreetMap contributors (ODbL) &middot; India boundary: Natural Earth, India view &middot; GHSL (EU JRC), Google Open Buildings, Ookla');
+  function ringPts(f){ var p=[]; for(var i=0;i<f.length;i+=2) p.push([f[i],f[i+1]]); return p; }
+  function drawIndia(){
+    fetch('data/india_outline.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(o){
+      if(indiaLayer) map.removeLayer(indiaLayer); indiaLayer=L.layerGroup();
+      o.neighbours.forEach(function(f){ indiaLayer.addLayer(L.polygon(ringPts(f),{renderer:baseRenderer,stroke:true,color:css('--border'),weight:0.6,fillColor:css('--land-out'),fillOpacity:1,interactive:false})); });
+      o.india.forEach(function(f){ indiaLayer.addLayer(L.polygon(ringPts(f),{renderer:baseRenderer,stroke:true,color:css('--border'),weight:1.2,fillColor:css('--land'),fillOpacity:1,interactive:false})); });
+      indiaLayer.addTo(map); if(roadLayer) roadLayer.bringToFront&&roadLayer.eachLayer(function(l){ l.bringToFront(); });
+    }).catch(function(){});
+  }
+  drawIndia();
+  function drawRoads(c){
+    if(roadLayer){ map.removeLayer(roadLayer); roadLayer=null; }
+    var use=function(b){ if(current!==c) return; roadLayer=L.layerGroup(); var W=[3.2,2.4,1.6,1.0], C=[css('--road-major'),css('--road-major'),css('--road'),css('--road')];
+      b.water.forEach(function(f){ roadLayer.addLayer(L.polygon(ringPts(f),{renderer:baseRenderer,stroke:false,fillColor:css('--water'),fillOpacity:1,interactive:false})); });
+      b.river.forEach(function(f){ roadLayer.addLayer(L.polyline(ringPts(f),{renderer:baseRenderer,color:css('--water'),weight:2.2,interactive:false})); });
+      b.rail.forEach(function(f){ roadLayer.addLayer(L.polyline(ringPts(f),{renderer:baseRenderer,color:css('--rail'),weight:1.4,dashArray:'5 4',interactive:false})); });
+      b.roads.forEach(function(r){ roadLayer.addLayer(L.polyline(ringPts(r[1]),{renderer:baseRenderer,color:C[r[0]],weight:W[r[0]],interactive:false})); });
+      roadLayer.addTo(map); };
+    if(BASE[c.slug]){ use(BASE[c.slug]); return; }
+    fetch('data/'+c.slug+'_base.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(b){ BASE[c.slug]=b; use(b); }).catch(function(){});
+  }
+
+  /* ---------- national view ---------- */
+  var GROWTH=[8,15,25];
+  function growthColor(g){ return g<GROWTH[0]?css('--g1'):g<GROWTH[1]?css('--g2'):g<GROWTH[2]?css('--g3'):css('--g4'); }
+  function cityRadius(h){ return 5+Math.sqrt(h/40000)*2.2; }
+  function drawNational(){
+    if(cellLayer){ map.removeLayer(cellLayer); cellLayer=null; } if(labelLayer){ map.removeLayer(labelLayer); labelLayer=null; } if(hiLayer){ map.removeLayer(hiLayer); hiLayer=null; }
+    current=null; $('#cityhead').innerHTML=''; if(location.hash) history.replaceState(null,'',location.pathname+location.search); if(roadLayer){ map.removeLayer(roadLayer); roadLayer=null; } $('#railmode').style.display='none'; $('#tools').style.display='flex'; renderList();
+    if(cityLayer){ map.removeLayer(cityLayer); }
+    cityLayer=L.layerGroup();
+    cities.slice().sort(function(a,b){return b.homes-a.homes}).forEach(function(c){
+      var m=L.circleMarker([c.lat,c.lng],{radius:cityRadius(c.homes),color:css('--ink'),weight:.8,fillColor:growthColor(c.growth_pct),fillOpacity:.78});
+      m.bindTooltip('<b>'+c.city+'</b> &middot; '+c.state+'<br>homes <b>'+fmtIN(c.homes)+'</b> &middot; growth <b>'+pct(c.growth_pct)+'</b><br>new squares since 2015 <b>'+fmt(c.new_cells)+'</b>'+(c.wired_share_pct!==undefined?'<br>homes in tiles with wired activity <b>'+c.wired_share_pct+'%</b> &middot; wired-test devices per 100 homes <b>'+c.wired_devices_per_100_homes+'</b> &middot; wired median <b>'+c.fixed_mbps_median+'</b> Mbps':'')+(c.wired_share_q?'<br>wired share Apr&ndash;Jun 25 <b>'+c.wired_share_q[0]+'%</b> &rarr; Jul&ndash;Sep 26 <b>'+c.wired_share_q[5]+'%</b>':'')+(c.mlab_dl_mbps!=null?'<br>M-Lab median download <b>'+c.mlab_dl_mbps+'</b> Mbps, '+fmt(c.mlab_samples_day)+' tests/day (2023&ndash;Mar 2024)'+(c.mlab_dl_2022!=null&&c.mlab_dl_2023!=null?', was <b>'+c.mlab_dl_2022+'</b> in 2022 &rarr; <b>'+c.mlab_dl_2023+'</b> in 2023':'')+'':''));
+      m.on('click',function(){ openCity(c.slug); });
+      cityLayer.addLayer(m);
+    });
+    cityLayer.addTo(map);
+    map.setView([22.5,80],5);
+    $('#legend').innerHTML='<div class="t">Circle size = homes &middot; colour = people growth 2015&rarr;2025</div>'+
+      '<div class="sw"><i style="background:'+css('--g1')+'"></i><i style="background:'+css('--g2')+'"></i><i style="background:'+css('--g3')+'"></i><i style="background:'+css('--g4')+'"></i></div>'+
+      '<div class="lab"><span>under 8%</span><span>8&ndash;15%</span><span>15&ndash;25%</span><span>over 25%</span></div><div style="margin-top:4px;color:var(--muted)">Click a city to see its grid.</div>';
+  }
+
+  /* ---------- city view ---------- */
+  var SCALES={
+    homes:{t:'Homes per 500 m square',b:[25,100,300,800,2000],f:function(d){return d[2]}},
+    buildings:{t:'Buildings per 500 m square',b:[10,50,150,400,1000],f:function(d){return d[3]}},
+    newshare:{t:'Share of 100 m squares newly built since 2015',b:[.05,.15,.3,.5,.75],f:function(d){return d[4]/25},isPct:true},
+    people:{t:'People per 500 m square (modelled)',b:[100,400,1200,3000,8000],f:function(d){return d[5]}},
+    wired:{t:'Wired-line speed-test devices per 600 m tile, Jul&ndash;Sep 2026 (Ookla open data)',b:[1,3,10,30,100],f:function(d){return d[10]}},
+    wmbps:{t:'Median wired download speed, Mbps (Ookla open data)',b:[25,50,100,200,400],f:function(d){return d[11]}},
+    mobonly:{t:'Mobile-only: mobile test devices in tiles with no wired test (Ookla)',b:[1,3,10,30,100],f:function(d){return d[10]===0?d[12]:0}},
+    plan:{t:'The plan: localities allocated passes, coloured by strategy',b:[],f:function(d){return 0}},
+    unwired:{t:'Where to wire: homes in tiles with under 3 wired-test devices, Jul&ndash;Sep 2026, where the cell shows signs of people (first-wire pool)',b:[25,100,300,800,2000],f:function(d){return d[10]<3&&elig(d)?d[2]:0}},
+    firstq:{t:'Quarter the tile first showed 3+ wired-test devices, Apr 2025 &rarr; Sep 2026 (Ookla)',b:[1,2,3,4,5],f:function(d){return d.length>19&&d[19]>=0?d[19]+1:0},cat:['Apr&ndash;Jun 25','Jul&ndash;Sep 25','Oct&ndash;Dec 25','Jan&ndash;Mar 26','Apr&ndash;Jun 26','Jul&ndash;Sep 26']},
+    newq:{t:'Newly wired since Apr 2025: tiles with no wired test in Apr&ndash;Jun 25 that have 3+ devices now (Ookla)',b:[1,3,10,30,100],f:function(d){return d.length>19&&d[13]===0&&d[18]>=3?d[18]:0}},
+    new3y:{t:'New buildings 2020&rarr;2023 per 500 m square (observed, yearly satellite series)',b:[5,20,50,100,200],f:function(d){return d[8]!==null?Math.max(d[8]-d[7],0):0},yearly:true},
+    new7y:{t:'New buildings 2016&rarr;2023 per 500 m square (observed)',b:[10,40,100,200,400],f:function(d){return d[8]!==null?Math.max(d[8]-d[6],0):0},yearly:true}
+  };
+  var STRAT_COL={'White-space':'--st-ws','New-area early mover':'--st-new','Share capture in contested areas':'--st-share'};
+  function planFor(c){ if(!INV||!c) return []; if(!c._plan){ c._plan=INV.alloc_loc.filter(function(a){return a.slug===c.slug}).slice().sort(function(a,b){return b.passes-a.passes}); c._planIdx={}; c._plan.forEach(function(a){ c._planIdx[a.locality]=a; }); } return c._plan; }
+  function planIdx(c){ planFor(c); return c._planIdx||{}; }
+  function seqColor(v,b){ var s=['--s1','--s2','--s3','--s4','--s5','--s6']; var i=0; while(i<b.length&&v>=b[i]) i++; return css(s[i]); }
+  function openCity(slug){
+    var c=cities.filter(function(x){return x.slug===slug})[0]; if(!c) return;
+    current=c; location.hash=slug;
+    if(cityLayer){ map.removeLayer(cityLayer); cityLayer=null; }
+    renderHead(c); drawRoads(c);
+    fetch('data/'+slug+'.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(rows){ c._rows=rows; c.yearly=rows.length&&rows[0][6]!==null&&rows[0][6]!==undefined; if(!c.yearly&&SCALES[metric].yearly) metric='homes'; if(metric==='plan'&&INV&&!planFor(c).length) metric='homes'; renderHead(c); drawCells(c); })
+      .then(function(){ return fetch('data/'+slug+'_localities.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }); })
+      .then(function(locs){ c._locs=locs; locStats(c); drawLocalities(c); renderLocalityList(c); }).catch(function(){ /* no locality file for this city */ })
+      .catch(function(){ $('#cityhead').insertAdjacentHTML('beforeend','<span class="chip flag">Could not load this city\'s squares.</span>'); });
+  }
+  function renderHead(c){
+    var h='<button class="chip" id="back" type="button">&larr; All cities</button>'+
+      '<span class="chip title">'+c.city+', '+c.state+'</span>'+
+      '<select class="chip" id="citypick" aria-label="Switch city">'+cities.slice().sort(function(a,b){return a.city.localeCompare(b.city)}).map(function(x){ return '<option value="'+x.slug+'"'+(x.slug===c.slug?' selected':'')+'>'+x.city+'</option>'; }).join('')+'</select>'+
+      '<span class="chip">homes <b>'+fmtIN(c.homes_urban||c.homes)+'</b>'+(c.homes_2020_urban?' <span style="color:var(--muted)">urban extent; '+fmtIN(c.homes_2020_urban)+' on the 2020 layer</span>':'')+'</span><span class="chip">buildings <b>'+fmtIN(c.buildings_urban||c.buildings)+'</b></span>'+
+      '<span class="chip">people <b>'+fmtIN(c.people_urban||c.people)+'</b> <span style="color:var(--muted)">'+pct(c.growth_pct)+' since 2015; 2025 layer is projected</span></span>'+
+      '<span class="chip">new squares <b>'+fmt(c.new_cells)+'</b></span>'+
+      (c.wired_share_pct!==undefined?'<span class="chip">homes in tiles with wired activity <b>'+c.wired_share_pct+'%</b> <span style="color:var(--muted)">Ookla, Jul&ndash;Sep 2026; not penetration</span></span>':'')+
+      (c.wired_devices_per_100_homes!==undefined?'<span class="chip">wired-test devices per 100 homes <b>'+c.wired_devices_per_100_homes+'</b> <span style="color:var(--muted)">was '+c.wired_devices_per_100_homes_apr25+' in Apr&ndash;Jun 25</span></span>':'')+
+      (c.wired_share_q?'<span class="chip">wired share by quarter <b>'+c.wired_share_q.join('% &middot; ')+'%</b> <span style="color:var(--muted)">Apr 25 &rarr; Sep 26</span></span>':'')+
+      (c.mlab_dl_mbps!=null?'<span class="chip">M-Lab median download <b>'+c.mlab_dl_mbps+'</b> Mbps <span style="color:var(--muted)">city level, 2023&ndash;Mar 2024</span></span>':'')+
+      (c.flag?'<span class="chip flag">'+c.flag+'</span>':'')+
+      '<span class="chip" id="metric">'+(planFor(c).length?'<label class="'+(metric==='plan'?'on':'')+'" style="font-weight:600"><input type="radio" name="m" value="plan">The plan</label>':'')+'<label class="'+(metric==='homes'?'on':'')+'"><input type="radio" name="m" value="homes">Homes</label><label class="'+(metric==='buildings'?'on':'')+'"><input type="radio" name="m" value="buildings">Buildings</label><label class="'+(metric==='newshare'?'on':'')+'"><input type="radio" name="m" value="newshare">New since 2015</label><label class="'+(metric==='people'?'on':'')+'"><input type="radio" name="m" value="people">People</label>'+(c.yearly?'<label class="'+(metric==='new3y'?'on':'')+'"><input type="radio" name="m" value="new3y">New 2020&rarr;23</label><label class="'+(metric==='new7y'?'on':'')+'"><input type="radio" name="m" value="new7y">New 2016&rarr;23</label>':'')+'<label class="'+(metric==='wired'?'on':'')+'"><input type="radio" name="m" value="wired">Wired tests</label><label class="'+(metric==='wmbps'?'on':'')+'"><input type="radio" name="m" value="wmbps">Wired Mbps</label><label class="'+(metric==='mobonly'?'on':'')+'"><input type="radio" name="m" value="mobonly">Mobile-only</label><label class="'+(metric==='unwired'?'on':'')+'"><input type="radio" name="m" value="unwired">Where to wire</label>'+(c._rows&&c._rows[0]&&c._rows[0].length>19?'<label class="'+(metric==='newq'?'on':'')+'"><input type="radio" name="m" value="newq">Newly wired since Apr 25</label><label class="'+(metric==='firstq'?'on':'')+'"><input type="radio" name="m" value="firstq">First wired quarter</label>':'')+'</span>';
+    $('#cityhead').innerHTML=h;
+    $('#back').addEventListener('click',drawNational);
+    $('#citypick').addEventListener('change',function(){ var slug=this.value; if(slug!==c.slug){ var n=cities.filter(function(x){return x.slug===slug})[0]; if(n){ n._fitted=false; } metric=SCALES[metric]&&SCALES[metric].yearly?'homes':metric; openCity(slug); } });
+    Array.prototype.forEach.call(document.querySelectorAll('#metric input'),function(inp){ inp.addEventListener('change',function(){ metric=inp.value; Array.prototype.forEach.call(document.querySelectorAll('#metric label'),function(l){l.classList.toggle('on',l.firstChild.value===metric)}); if(current&&current._rows) drawCells(current); if(current&&current._locs) renderLocalityList(current); }); });
+  }
+  function drawCells(c){
+    if(cellLayer){ map.removeLayer(cellLayer); }
+    var sc=SCALES[metric], rows=c._rows, dl=0.00225, lat0=c.lat, dg=dl/Math.cos(lat0*Math.PI/180);
+    var g=L.layerGroup(); var b=[[90,180],[-90,-180]];
+    var plan=metric==='plan'?planIdx(c):null, pidx=INV?planIdx(c):{};
+    rows.forEach(function(d){
+      var fill, op, pl=d[9]?pidx[d[9]]:null;
+      if(plan){ if(!pl) return; fill=css(STRAT_COL[pl.strategy]); op=(d[10]<3&&elig(d))?.88:.22; }
+      else { var v=sc.f(d); if(!v) return; fill=seqColor(v,sc.b); op=(d.length>20&&d[20]<0.5)?.35:.82; }
+      var r=L.rectangle([[d[0]-dl,d[1]-dg],[d[0]+dl,d[1]+dg]],{stroke:false,fillColor:fill,fillOpacity:op,interactive:true});
+      r.bindTooltip((d[9]?'<b>'+d[9]+'</b><br>':'')+(pl?'<b>Plan: '+STRAT[pl.strategy].name+'</b>, '+fmt(pl.passes)+' passes in this locality'+((d[10]<3&&elig(d))?' &middot; this cell is in the pool':' &middot; this cell is already wired or silent')+'<br>':'')+'homes <b>'+fmt(d[2])+'</b> &middot; buildings <b>'+fmt(d[3])+'</b><br>people <b>'+fmt(d[5])+'</b> &middot; new 100 m squares <b>'+d[4]+'</b> of 25'+(d[8]!==null?'<br>buildings 2016 <b>'+fmt(d[6])+'</b> &middot; 2020 <b>'+fmt(d[7])+'</b> &middot; 2023 <b>'+fmt(d[8])+'</b>':'')+'<br>wired tests: <b>'+d[10]+'</b> devices'+(d[11]?', <b>'+d[11]+'</b> Mbps':'')+' &middot; mobile: <b>'+d[12]+'</b> devices'+(d.length>20&&d[20]<0.5?'<br><i>outside the urban extent (rural by settlement class)</i>':'')+(d.length>19?'<br>wired devices by quarter Apr 25 &rarr; Sep 26: <b>'+d.slice(13,19).join(' &middot; ')+'</b>':''));
+      g.addLayer(r);
+      if(d[0]-dl<b[0][0]) b[0][0]=d[0]-dl; if(d[1]-dg<b[0][1]) b[0][1]=d[1]-dg; if(d[0]+dl>b[1][0]) b[1][0]=d[0]+dl; if(d[1]+dg>b[1][1]) b[1][1]=d[1]+dg;
+    });
+    cellLayer=g.addTo(map);
+    if(!c._fitted&&document.body.getAttribute('data-tab')==='map'){ map.invalidateSize(); map.fitBounds(b,{padding:[20,20]}); c._fitted=true; }
+    if(plan){ var P=planFor(c), byS={}, tot=0; P.forEach(function(a){ byS[a.strategy]=(byS[a.strategy]||0)+a.passes; tot+=a.passes; });
+      $('#legend').innerHTML='<div class="t">The plan for '+c.city+': <b>'+fmt(tot)+'</b> passes in '+P.length+' localities</div>'+Object.keys(byS).map(function(k){ return '<div style="margin:3px 0"><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+css(STRAT_COL[k])+';vertical-align:-2px;margin-right:6px"></i>'+STRAT[k].name+' <b>'+fmt(byS[k])+'</b></div>'; }).join('')+'<div style="margin-top:4px;color:var(--muted)">Solid = the unwired homes to pass; faint = the rest of the locality. Click a locality in the list to zoom.</div>';
+      return; }
+    var sw='', lab='', edges=[0].concat(sc.b);
+    for(var i=0;i<6;i++){ sw+='<i style="background:'+css(['--s1','--s2','--s3','--s4','--s5','--s6'][i])+'"></i>'; }
+    lab=sc.cat?['never'].concat(sc.cat).join('</span><span>'):edges.map(function(e){return sc.isPct?Math.round(e*100)+'%':fmt(e)}).join('</span><span>');
+    $('#legend').innerHTML='<div class="t">'+sc.t+'</div><div class="sw">'+sw+'</div><div class="lab"><span>'+lab+'</span></div>';
+  }
+
+  /* ---------- localities ---------- */
+  function drawLocalities(c){
+    if(labelLayer){ map.removeLayer(labelLayer); }
+    labelLayer=L.layerGroup();
+    function build(){
+      labelLayer.clearLayers(); var z=map.getZoom(); var n=z>=15?c._locs.length:z>=14?120:z>=13?60:30;
+      var list=c._locs.slice(0,n); if(metric==='plan'){ var pi=planIdx(c); list=c._locs.filter(function(l){return pi[l.name]}); }
+      list.forEach(function(l,i){
+        labelLayer.addLayer(L.marker([l.lat,l.lng],{icon:L.divIcon({className:'',html:'<span class="loclabel'+(i<15?' big':'')+'">'+l.name+'</span>',iconSize:null}),interactive:false,keyboard:false}));
+      });
+    }
+    build(); map.on('zoomend',function(){ if(current&&current._locs===c._locs) build(); }); labelLayer.addTo(map);
+  }
+  function renderPlanList(c){
+    var P=planFor(c); $('#railmode').style.display='flex'; $('#railcity').textContent=c.city+', the plan'; $('#tools').style.display='none';
+    $('#list').innerHTML=P.map(function(a){ return '<button class="row loc" type="button" data-loc="'+a.locality.replace(/"/g,'&quot;')+'" role="listitem"><span class="nm"><i class="dot" style="background:'+css(STRAT_COL[a.strategy])+'"></i>'+a.locality+'<small>'+STRAT[a.strategy].name+'</small></span><span class="v">'+fmt(a.passes)+'<i>passes</i></span><span class="v2">'+a.wired_pct+'% wired</span></button>'; }).join('');
+  }
+  function renderLocalityList(c){
+    if(metric==='plan'&&planFor(c).length){ renderPlanList(c); return; }
+    $('#railmode').style.display='flex'; $('#railcity').textContent=c.city; $('#tools').style.display='none';
+    var key=$('#locsort').value; var kv=function(l){return key==='new3y'?((l.new3y!=null)?l.new3y:(l.new15||0)):(l[key]||0)}; var rows=c._locs.slice().sort(function(a,b){return kv(b)-kv(a)});
+    $('#list').innerHTML=rows.map(function(l){
+      var nv=(l.new3y!=null)?l.new3y:(l.new15!=null?l.new15:0), nl=(l.new3y!=null)?'new 20-23':'new sq 2015+';
+      var v=key==='wired_pct'?l.wired_pct+'%':key==='new3y'?fmt(nv):key==='buildings'?fmt(l.buildings):key==='unwired'?fmt(l.unwired||0):key==='newshare'?Math.round((l.newshare||0)*100)+'%':fmtIN(l.homes);
+      var u=key==='wired_pct'?'wired':key==='new3y'?nl:key==='buildings'?'bldg':key==='unwired'?'unwired':key==='newshare'?'new':'homes';
+      return '<button class="row loc" type="button" data-loc="'+l.name.replace(/"/g,'&quot;')+'" role="listitem"><span class="nm">'+l.name+'<small>'+l.squares+' sq</small></span><span class="v">'+v+'<i>'+u+'</i></span><span class="v2">'+(key==='homes'?fmt(nv)+' '+(l.new3y!=null?'new':'new sq'):fmtIN(l.homes))+'</span></button>';
+    }).join('');
+  }
+  function focusLocality(c,name){
+    var l=c._locs.filter(function(x){return x.name===name})[0]; if(!l) return;
+    if(hiLayer){ map.removeLayer(hiLayer); }
+    hiLayer=L.layerGroup(); var dl=0.00225, dg=dl/Math.cos(c.lat*Math.PI/180);
+    c._rows.forEach(function(d){ if(d[9]===name) hiLayer.addLayer(L.rectangle([[d[0]-dl,d[1]-dg],[d[0]+dl,d[1]+dg]],{fill:false,color:css('--ink'),weight:2,interactive:false})); });
+    hiLayer.addTo(map); map.fitBounds([[l.bbox[0],l.bbox[1]],[l.bbox[2],l.bbox[3]]],{padding:[40,40],maxZoom:15});
+  }
+  $('#locsort').addEventListener('change',function(){ if(current&&current._locs) renderLocalityList(current); });
+
+  /* ---------- rail ---------- */
+  function renderList(){
+    var q=($('#q').value||'').toLowerCase(), key=$('#sort').value;
+    var rows=cities.filter(function(c){return !q||c.city.toLowerCase().indexOf(q)>=0||c.state.toLowerCase().indexOf(q)>=0});
+    rows.sort(key==='rank'?function(a,b){return a.rank-b.rank}:(key==='wired_share_pct'||key==='mlab_dl_mbps'||key==='wired_devices_per_100_homes')?function(a,b){return (a[key]==null?1e9:a[key])-(b[key]==null?1e9:b[key])}:function(a,b){return b[key]-a[key]});
+    $('#list').innerHTML=rows.map(function(c){
+      var v=key==='growth_pct'?pct(c.growth_pct):key==='new_cells'?fmt(c.new_cells):key==='wired_share_pct'?(c.wired_share_pct+'%'):key==='mlab_dl_mbps'?(c.mlab_dl_mbps==null?'n/a':c.mlab_dl_mbps+' Mbps'):key==='wired_share_change_since_apr25_pt'?((c.wired_share_change_since_apr25_pt>0?'+':'')+c.wired_share_change_since_apr25_pt+' pt'):key==='wired_devices_per_100_homes'?(c.wired_devices_per_100_homes+' /100'):fmtIN(c.homes);
+      var u=key==='growth_pct'?'':key==='new_cells'?'<i>new sq</i>':key==='wired_share_pct'?'<i>wired</i>':key==='mlab_dl_mbps'?'<i>M-Lab</i>':key==='wired_share_change_since_apr25_pt'?'<i>since Apr 25</i>':key==='wired_devices_per_100_homes'?'<i>devices</i>':'<i>homes</i>';
+      return '<button class="row" type="button" data-slug="'+c.slug+'" role="listitem"><span class="rk">'+c.rank+'</span><span class="nm">'+c.city+'<small>'+c.state+'</small></span><span class="v">'+v+u+'</span></button>';
+    }).join('');
+  }
+  $('#list').addEventListener('click',function(e){ var b=e.target.closest('.row'); if(!b) return; if(b.classList.contains('loc')&&current) focusLocality(current,b.getAttribute('data-loc')); else openCity(b.getAttribute('data-slug')); });
+  $('#q').addEventListener('input',renderList); $('#sort').addEventListener('change',renderList);
+
+
+  /* ---------- tabs ---------- */
+  function showTab(t){ document.body.setAttribute('data-tab',t); Array.prototype.forEach.call(document.querySelectorAll('#topbar button'),function(b){ b.classList.toggle('on',b.getAttribute('data-tab')===t); }); if(t==='data') renderData(); if(t==='params') renderParams(); if(t==='invest') renderInvest(); if(t==='map'){ map.invalidateSize(); if(!current) map.setView([22.5,80],5); else if(current._rows){ current._fitted=false; drawCells(current); } setTimeout(function(){ map.invalidateSize(); },80); } }
+  Array.prototype.forEach.call(document.querySelectorAll('#topbar button'),function(b){ b.addEventListener('click',function(){ showTab(b.getAttribute('data-tab')); }); });
+
+  /* ---------- data tab: India > city > locality > 500 m cells ---------- */
+  var D={level:'cities',state:null,city:null,loc:null,sortKey:null,sortDir:-1,q:''};
+  function loadCity(c){
+    var p1=c._rows?Promise.resolve():fetch('data/'+c.slug+'.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(rows){ c._rows=rows; c.yearly=rows.length&&rows[0][6]!==null&&rows[0][6]!==undefined; });
+    var p2=c._locs?Promise.resolve():fetch('data/'+c.slug+'_localities.json',{cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(l){ c._locs=l; }).catch(function(){ c._locs=[]; });
+    return Promise.all([p1,p2]).then(function(){ locStats(c); });
+  }
+  var CITY_COLS=[
+    {l:'#',f:function(c){return c.rank}},
+    {l:'City',left:true,f:function(c){return c.city}},
+    {l:'State',left:true,f:function(c){return c.state}},
+    {l:'Play',left:true,f:function(c){return c.play||''},badge:function(){return ''},why:function(c){return c.play_why||''}},
+    {l:'Why',left:true,wrap:true,f:function(c){return c.play_why||''}},
+    {l:'Homes',f:function(c){return c.homes},fmt:fmtIN},
+    {l:'Unwired homes',f:function(c){return c.homes_unwired},fmt:fmtIN},
+    {l:'Unwired share %',f:function(c){return c.unwired_share_pct},tot:function(rows){ var h=sum(rows,function(c){return c.homes}), u=sum(rows,function(c){return c.homes_unwired}); return h?100*u/h:null; }},
+    {l:'Never-tested homes',f:function(c){return c.homes_no_wired_test},fmt:fmtIN},
+    {l:'Buildings',f:function(c){return c.buildings},fmt:fmtIN,title:'Google Open Buildings, 2023 imagery, observed'},
+    {l:'People 2025',f:function(c){return c.people},fmt:fmtIN,title:'GHSL 2025 layer, modelled'},
+    {l:'Growth 2015-25 %',f:function(c){return c.growth_pct},fmt:pct},
+    {l:'New 100 m sq since 2015',f:function(c){return c.new_cells},fmt:fmt},
+    {l:'Wired share %',f:function(c){return c.wired_share_pct},tot:function(rows){ var h=0,w=0; rows.forEach(function(c){ if(c.wired_share_pct!=null){ h+=c.homes; w+=c.homes*c.wired_share_pct; } }); return h?w/h:null; }},
+    {l:'Change since Apr 25 (pt)',f:function(c){return c.wired_share_change_since_apr25_pt}},
+    {l:'Wired Mbps',f:function(c){return c.fixed_mbps_median},title:'Median across tested tiles'},
+    {l:'M-Lab Mbps',f:function(c){return c.mlab_dl_mbps},title:'City median download, 2023 to Mar 2024'},
+    {l:'Newly wired homes since Apr 25',f:function(c){return c.newly_wired_homes},fmt:fmtIN},
+    {l:'Flag',left:true,f:function(c){return c.flag||''}}
+  ];
+  var STATE_COLS=[
+    {l:'State',left:true,f:function(s){return s.state}},
+    {l:'Cities',f:function(s){return s.cities}},
+    {l:'Homes',f:function(s){return s.homes},fmt:fmtIN},
+    {l:'Unwired homes',f:function(s){return s.unwired},fmt:fmtIN},
+    {l:'Unwired share %',f:function(s){return s.homes?Math.round(1000*s.unwired/s.homes)/10:null},tot:function(rows){ var h=sum(rows,function(x){return x.homes}), u=sum(rows,function(x){return x.unwired}); return h?100*u/h:null; }},
+    {l:'Never-tested homes',f:function(s){return s.never},fmt:fmtIN},
+    {l:'Biggest pool',left:true,f:function(s){return s.best+' ('+fmtIN(s.bestv)+')'}},
+    {l:'Cities covered',left:true,wrap:true,f:function(s){return s.names.join(', ')}}
+  ];
+  function stateRows(){ var m={}; cities.forEach(function(c){ var s=m[c.state]||(m[c.state]={state:c.state,cities:0,homes:0,unwired:0,never:0,best:'',bestv:-1,names:[]}); s.cities++; s.homes+=c.homes; s.unwired+=c.homes_unwired||0; s.never+=c.homes_no_wired_test||0; s.names.push(c.city); if((c.homes_unwired||0)>s.bestv){ s.bestv=c.homes_unwired||0; s.best=c.city; } }); return Object.keys(m).map(function(k){return m[k]}); }
+  var LOC_COLS=[
+    {l:'Locality',left:true,f:function(l){return l.name}},
+    {l:'Verdict',left:true,f:function(l){return l.verdict||''},badge:function(l){return l.vclass||''},why:function(l){return l.why||''}},
+    {l:'Homes',f:function(l){return l.homes},fmt:fmtIN},
+    {l:'Unwired homes',f:function(l){return l.unwired},fmt:fmt},
+    {l:'Wired share %',f:function(l){return l.wired_pct},tot:function(rows){ var h=sum(rows,function(l){return l.homes}), u=sum(rows,function(l){return l.unwired}); return h?100*(h-u)/h:null; }},
+    {l:'New',f:function(l){return l.new3y!=null?l.new3y:(l.new15||0)},fmt:fmt},
+    {l:'New share %',f:function(l){return l.newshare!=null?Math.round(l.newshare*100):null},tot:function(rows){ var y=D.city&&D.city.yearly; var n=sum(rows,function(l){return y?(l.new3y||0):(l.new15||0)}), d=y?sum(rows,function(l){return l.buildings}):sum(rows,function(l){return l.squares})*25; return d?100*n/d:null; }},
+    {l:'Mobile-only devices',f:function(l){return l.mob},fmt:fmt},
+    {l:'Newly wired cells',f:function(l){return l.newly},fmt:fmt},
+    {l:'Wired Mbps',f:function(l){return l.mbps||null}},
+    {l:'500 m cells',f:function(l){return l.squares}},
+    {l:'Buildings',f:function(l){return l.buildings},fmt:fmt}
+  ];
+  var QN=['Apr-Jun 25','Jul-Sep 25','Oct-Dec 25','Jan-Mar 26','Apr-Jun 26','Jul-Sep 26'];
+  var CELL_COLS=[
+    {l:'Lat',f:function(d){return d[0]}},{l:'Lng',f:function(d){return d[1]}},
+    {l:'Homes',f:function(d){return d[2]},fmt:fmt},{l:'Unwired homes',f:function(d){return d[10]<3&&elig(d)?d[2]:0},fmt:fmt},
+    {l:'Status',left:true,f:function(d){return d[10]>=3?(d.length>19&&d[13]===0&&d[18]>=3?'newly wired since Apr 25':'wired'):!elig(d)?'silent (no tests, outside urban extent, or industrial)':d[10]===0?'never tested':'weak signal (1-2 devices)'}},
+    {l:'Buildings',f:function(d){return d[3]},fmt:fmt},{l:'People',f:function(d){return d[5]},fmt:fmt},
+    {l:'New 100 m sq (of 25)',f:function(d){return d[4]}},
+    {l:'Bldg 2016',f:function(d){return d[6]},fmt:fmt,yearly:true},{l:'Bldg 2020',f:function(d){return d[7]},fmt:fmt,yearly:true},{l:'Bldg 2023',f:function(d){return d[8]},fmt:fmt,yearly:true},
+    {l:'Wired devices',f:function(d){return d[10]}},{l:'Wired Mbps',f:function(d){return d[11]}},{l:'Mobile devices',f:function(d){return d[12]}},
+    {l:'Wired devices by quarter',left:true,f:function(d){return d.length>19?d.slice(13,19).join(' | '):''},title:QN.join(' | ')},
+    {l:'First wired quarter',left:true,f:function(d){return d.length>19&&d[19]>=0?QN[d[19]]:'never'}},
+    {l:'Urban extent',left:true,f:function(d){return d.length>20&&d[20]!=null?(d[20]<0.5?'outside':'inside'):''}}
+  ];
+
+  var DEFS={
+    '#':'The city\'s rank by its 2011 Census population. 1 is the biggest.',
+    'City':'The city. Its numbers cover a circle around the centre (9 to 35 km by size), not the municipal boundary.',
+    'State':'The state the city is in.',
+    'Play':'Our suggested move for this city. Comes from five questions: how big is the pool of homes without a wire, is someone already there, is it moving, how good are their lines, is the city growing. Six answers: Build, Expand edge, Fill gaps, Switch attack, Hold and upsell, Watch. The exact rules are in the Parameters tab.',
+    'Homes':'How many households live here. Calculated as people 2025 divided by the state\'s average family size (for example 4.8 in Delhi, 4.9 in Haryana). An estimate, matched to census totals.',
+    'Never-tested homes':'Homes in 600 m patches where no device at all ran a Wi-Fi or cable speed test in July to September 2026. The strictest version of the first-wire pool.',
+    'Unwired share %':'Unwired homes divided by all homes, in percent. The higher, the more open the market.',
+    'Cities':'How many of the 100 largest cities fall in this state. A state with few cities in the list looks small for that reason alone.',
+    'Biggest pool':'The city in this state with the most unwired homes.',
+    'Cities covered':'The cities counted in this row.',
+    'Buildings':'Buildings counted from satellite pictures taken in 2023, one count per building. Observed, not estimated.',
+    'People 2025':'People living here in 2025, from the European population grid. It spreads census counts over buildings and projects forward from 2018 pictures, so it is an estimate.',
+    'Growth 2015-25 %':'People 2025 divided by people 2015, minus one. How much the population grew in ten years.',
+    'New 100 m sq since 2015':'Squares of 100 m that had no buildings in 2015 and have some by 2025.',
+    'Wired share %':'Share of homes sitting in patches where three or more different devices ran a wired speed test. Three devices is a household pattern, so it means someone is already selling a wire there. It does not mean every home is connected.',
+    'Change since Apr 25 (pt)':'Wired share now minus wired share in April to June 2025, in percentage points. Moves of 2 to 3 points are noise; 3 or more is a trend.',
+    'Wired Mbps':'Typical download speed on wired tests. City: the middle value across all tested patches. Locality: the average of its tested cells.',
+    'M-Lab Mbps':'The city\'s middle download speed from the open M-Lab speed-test network, 2023 to March 2024, when its public files stop.',
+    'Newly wired homes since Apr 25':'Homes in patches that had no wired test in April to June 2025 and have three or more testing devices now.',
+    'Why':'The one-line reason behind the play: wired share, the unwired pool, speed and growth, from the same columns as this table.',
+    'Verdict':'What to do in this locality, from its own cells. New area, wire early: growing fast and not yet full. Build, open: a big pool of unwired homes and almost nobody there. Fill gaps: someone is there but 500+ homes remain unwired. Switch, slow lines: already wired but under 60 Mbps. Hold, wired: 85%+ of homes already near a wire. Watch: small pool. Too small: under 200 homes. Hover the badge for the numbers behind it.',
+    'Unwired homes':'Homes in cells whose 600 m patch had fewer than three wired-test devices in July to September 2026, counted only where the cell lies inside the built-up urban extent, shows at least one speed test of any kind, and has at most 15 homes per building. Cells failing those checks are silent: no evidence of people, or industrial land. This is the pool a new wire could sell into.',
+    'New share %':'Gurugram: new buildings 2020 to 2023 divided by the 2023 building count (observed). Other cities: new 100 m squares since 2015 divided by all 100 m squares in the locality (estimated).',
+    'Mobile-only devices':'Speed-test devices on a mobile signal in cells with no wired test at all. A crowd that wants bandwidth where no wire is seen.',
+    'Newly wired cells':'Cells that had no wired test in April to June 2025 and three or more wired-test devices in July to September 2026. Someone wired them this year.',
+    'Status':'Wired: three or more wired-test devices. Newly wired: reached three since April 2025. Weak signal: one or two devices. Never tested: no wired test but some mobile test. Silent: no test of any kind, outside the built-up extent, or more than 15 homes per building, so it counts toward no pool.',
+    'Flag':'Data warnings. For example: the population grid under-counts this city, so homes come from buildings; or this is a satellite town whose squares were shared with its metro.',
+    'Locality':'The area name. From OpenStreetMap\'s named places (nearest within 2 km). Gurugram also uses area boundaries and the sector in Google listings\' addresses.',
+    '500 m cells':'How many 500 m map cells carry this locality name.',
+    'New':'Growth. In Gurugram: new buildings between 2020 and 2023 from yearly satellite pictures (observed). Elsewhere: new 100 m squares since 2015 (estimated).',
+    'Lat':'Latitude of the centre of the 500 m cell.',
+    'Lng':'Longitude of the centre of the 500 m cell.',
+    'People':'People living in the cell in 2025, from the population grid (estimate).',
+    'New 100 m sq (of 25)':'Each 500 m cell holds 25 squares of 100 m. This is how many of them were built after 2015.',
+    'Bldg 2016':'Buildings seen in the 2016 yearly satellite picture (Gurugram only).',
+    'Bldg 2020':'Buildings seen in the 2020 yearly satellite picture (Gurugram only).',
+    'Bldg 2023':'Buildings seen in the 2023 yearly satellite picture (Gurugram only).',
+    'Wired devices':'Different devices that ran a speed test on Wi-Fi or cable in this cell\'s 600 m patch, July to September 2026. Zero means no wired test was seen.',
+    'Mobile devices':'Different devices that ran a speed test on a mobile signal in the same patch.',
+    'Wired devices by quarter':'The wired-device count for each of six quarters, April to June 2025 through July to September 2026, oldest first.',
+    'First wired quarter':'The first quarter in which this patch reached three or more wired-test devices. Never means it has not yet.',
+    'Urban extent':'Inside or outside the built-up settlement area, by the European settlement model. Outside usually means fields or villages at the edge of the circle.'
+  };
+  function renderDefs(){ var cols=currentCols(); var box=$('#ddefs'); if(!box) return; box.innerHTML='<summary>What these columns mean, and how they are calculated</summary><dl>'+cols.map(function(c){ return '<dt>'+c.l+'</dt><dd>'+(DEFS[c.l]||c.title||'')+'</dd>'; }).join('')+'</dl>'; }
+
+
+  /* ---------- strategist layer: locality verdicts and insights, all from the same cell rows the tables show ---------- */
+  var NEW_SHARE_YEARLY=0.25, NEW_SHARE_SQ=0.12, OPEN=50, SATURATED=85, SLOW=60, POOL_MIN=500, POOL_NEW=200, HOMES_MIN=200;
+  function verdictOf(l,yearly){
+    var ws=l.wired_pct, pool=l.unwired, ns=l.newshare||0, isNew=ns>=(yearly?NEW_SHARE_YEARLY:NEW_SHARE_SQ);
+    var base=fmt(pool)+' unwired homes, '+ws+'% wired, '+Math.round(ns*100)+'% '+(yearly?'of buildings new since 2020':'of squares new since 2015');
+    if(l.homes<HOMES_MIN) return ['TOO SMALL','v-small','under '+HOMES_MIN+' homes: '+base];
+    if(isNew&&ws<SATURATED&&pool>=POOL_NEW) return ['NEW AREA - WIRE EARLY','v-new','growing and not yet full: '+base];
+    if(ws<OPEN&&pool>=POOL_MIN) return ['BUILD - OPEN','v-build','big pool, nobody there yet: '+base];
+    if(ws<SATURATED&&pool>=POOL_MIN) return ['FILL GAPS','v-fill','someone is there, gaps remain: '+base];
+    if(ws>=SATURATED&&l.mbps>0&&l.mbps<SLOW) return ['SWITCH - SLOW LINES','v-switch','wired but slow lines: '+base+', '+l.mbps+' Mbps'];
+    if(ws>=SATURATED) return ['HOLD - WIRED','v-hold','already wired: '+base];
+    return ['WATCH','v-watch','small pool: '+base];
+  }
+  function elig(d){ return !(d.length>20&&d[20]!=null&&d[20]<0.5) && (d[10]+d[12])>0 && d[3]>0 && d[2]/d[3]<=15; }
+  function locStats(c){
+    if(c._lstats||!c._rows||!c._locs||!c._locs.length) return;
+    var agg={};
+    c._rows.forEach(function(d){ var n=d[9]; if(!n) return; var a=agg[n]||(agg[n]={homes:0,unwired:0,silent:0,never:0,mob:0,b23:0,new3y:0,newsq:0,sq:0,newly:0,wh:0,mb:0,mbn:0});
+      var ok=elig(d); a.homes+=d[2]; a.sq++; a.newsq+=d[4]; if(d[10]<3){ if(ok) a.unwired+=d[2]; else a.silent+=d[2]; } else a.wh+=d[2]; if(d[10]===0&&ok){ a.never+=d[2]; a.mob+=d[12]; }
+      if(d[8]!==null&&d[8]!==undefined){ a.b23+=d[8]; a.new3y+=Math.max(d[8]-d[7],0); }
+      if(d.length>19&&d[13]===0&&d[18]>=3) a.newly++; if(d[10]>0&&d[11]>0){ a.mb+=d[11]; a.mbn++; } });
+    c._locs.forEach(function(l){ var a=agg[l.name];
+      if(!a){ l.unwired=0; l.never=0; l.mob=0; l.newly=0; l.mbps=0; l.newshare=0; l.verdict='WATCH'; l.vclass='v-watch'; l.why='no cells carry this name'; return; }
+      l.unwired=a.unwired; l.never=a.never; l.mob=a.mob; l.newly=a.newly; l.mbps=a.mbn?Math.round(a.mb/a.mbn):0;
+      l.wired_pct=a.homes?Math.round(100*a.wh/a.homes):0;
+      l.newshare=c.yearly?(a.b23?a.new3y/a.b23:0):(a.sq?a.newsq/(a.sq*25):0);
+      var v=verdictOf(l,c.yearly); l.verdict=v[0]; l.vclass=v[1]; l.why=v[2]; });
+    c._lstats=true;
+  }
+  function topBy(arr,key,n,asc){ return arr.filter(function(x){ var v=typeof key==='function'?key(x):x[key]; return v!=null&&isFinite(v); }).sort(function(a,b){ var x=typeof key==='function'?key(a):a[key], y=typeof key==='function'?key(b):b[key]; return asc?x-y:y-x; }).slice(0,n); }
+  function sum(arr,f){ var s=0; arr.forEach(function(x){ var v=f(x); if(typeof v==='number'&&isFinite(v)) s+=v; }); return s; }
+  function list(items){ return items.length?items.join(', '):'<span class="muted">none at the current thresholds</span>'; }
+  var INS_KEY='';
+  function renderInsights(){
+    var box=$('#dins'); if(!box) return; var key=D.level+'|'+(D.state||'')+'|'+(D.city?D.city.slug:'')+'|'+(D.loc||''); if(key===INS_KEY) return; INS_KEY=key;
+    var li=[], h='';
+    if(D.level==='states'){
+      var S=stateRows(), U=sum(S,function(x){return x.unwired}), H=sum(S,function(x){return x.homes}), N=sum(S,function(x){return x.never});
+      var shr=function(x){ return x.homes?100*x.unwired/x.homes:null; };
+      h='Wired home-pass opportunity by state';
+      li.push('<b>'+fmtIN(U)+'</b> of <b>'+fmtIN(H)+'</b> homes ('+Math.round(100*U/H)+'%) in the 100 cities are unwired: under 3 wired-test devices in their patch. <b>'+fmtIN(N)+'</b> of them were never tested on a wire at all.');
+      li.push('Biggest pools: '+list(topBy(S,'unwired',6).map(function(x){ return x.state+' <b>'+fmtIN(x.unwired)+'</b>'; }))+'.');
+      li.push('Most open per home (highest unwired share): '+list(topBy(S,shr,6).map(function(x){ return x.state+' <b>'+Math.round(shr(x))+'%</b>'; }))+'.');
+      li.push('Nearly done (lowest unwired share): '+list(topBy(S,shr,4,true).map(function(x){ return x.state+' <b>'+Math.round(shr(x))+'%</b>'; }))+'.');
+      li.push('<span class="muted">A state\'s pool depends on how many of its cities are in the top 100 (the Cities column). Compare shares across states, totals within one. Click a state for its cities.</span>');
+    } else if(D.level==='cities'){
+      var rows=currentRows(), pool=sum(rows,function(c){return c.homes_unwired}), never=sum(rows,function(c){return c.homes_no_wired_test}), homes=sum(rows,function(c){return c.homes});
+      var order=['BUILD','EXPAND EDGE','FILL GAPS','SWITCH ATTACK','HOLD / UPSELL','WATCH'], cnt={}; rows.forEach(function(c){ cnt[c.play]=(cnt[c.play]||0)+1; });
+      h=D.state?'What the '+rows.length+' '+(rows.length===1?'city':'cities')+' in '+D.state+' say':'What the 100 cities say';
+      li.push('<b>'+fmtIN(pool)+'</b> of <b>'+fmtIN(homes)+'</b> homes ('+Math.round(100*pool/homes)+'%) are unwired: under 3 wired-test devices in their patch. <b>'+fmtIN(never)+'</b> of them were never tested on a wire at all: the strictest first-wire pool.');
+      li.push('Plays: '+order.map(function(p){ return '<b>'+(cnt[p]||0)+'</b> '+p.toLowerCase(); }).join(', ')+'. Hover a play badge for the reason.');
+      li.push('Biggest pools (unwired homes): '+list(topBy(rows,'homes_unwired',6).map(function(c){ return c.city+' <b>'+fmtIN(c.homes_unwired)+'</b>'; }))+'.');
+      li.push('Most open per home (unwired share): '+list(topBy(rows,'unwired_share_pct',6).map(function(c){ return c.city+' <b>'+Math.round(c.unwired_share_pct)+'%</b>'; }))+'.');
+      li.push('Fastest-growing since 2015: '+list(topBy(rows,'growth_pct',6).map(function(c){ return c.city+' <b>'+pct(c.growth_pct)+'</b>'; }))+'.');
+      li.push('Someone is wiring now (wired share up most since Apr 25): '+list(topBy(rows,'wired_share_change_since_apr25_pt',6).map(function(c){ return c.city+' <b>+'+c.wired_share_change_since_apr25_pt+' pt</b>'; }))+'. Moves under 3 points are noise.');
+      li.push('Wired but slow, ripe for a switch offer: '+list(topBy(rows.filter(function(c){return c.wired_share_pct>=60&&c.fixed_mbps_median>0}),'fixed_mbps_median',6,true).map(function(c){ return c.city+' <b>'+c.fixed_mbps_median+' Mbps</b>'; }))+'.');
+    } else if(D.level==='locs'){
+      var c=D.city, L=c._locs||[]; if(!c._lstats){ box.hidden=true; INS_KEY=''; return; }
+      var unw=sum(L,function(l){return l.unwired}), hm=sum(L,function(l){return l.homes}), withPool=L.filter(function(l){return l.unwired>=POOL_MIN}).length;
+      var newAreas=L.filter(function(l){return l.homes>=HOMES_MIN&&l.newshare>=(c.yearly?NEW_SHARE_YEARLY:NEW_SHARE_SQ)});
+      var nv=c.yearly?'new buildings 2020 to 2023 as a share of 2023 buildings':'new 100 m squares since 2015 as a share of all squares';
+      h='Where to wire in '+c.city;
+      li.push('<b>'+fmt(unw)+'</b> of <b>'+fmtIN(hm)+'</b> homes ('+(hm?Math.round(100*unw/hm):0)+'%) are unwired: their patch had under 3 wired-test devices in Jul to Sep 2026. <b>'+withPool+'</b> localities hold a pool of '+POOL_MIN+'+ such homes.');
+      li.push('Wire first (biggest unwired pools): '+list(topBy(L,'unwired',8).filter(function(l){return l.unwired>0}).map(function(l){ return l.name+' <b>'+fmt(l.unwired)+'</b>'; }))+'.');
+      li.push('Newest areas ('+nv+'): '+list(topBy(L.filter(function(l){return l.homes>=HOMES_MIN}),'newshare',8).filter(function(l){return l.newshare>0}).map(function(l){ return l.name+' <b>'+Math.round(l.newshare*100)+'%</b>'; }))+'.');
+      var bets=L.filter(function(l){return l.verdict==='NEW AREA - WIRE EARLY'});
+      li.push('New and still open, the early-mover bets (<b>'+bets.length+'</b> of the '+newAreas.length+' new areas; the rest are already wired or hold under '+POOL_NEW+' unwired homes): '+list(topBy(bets,'unwired',8).map(function(l){ return l.name+' <b>'+fmt(l.unwired)+'</b> unwired'; }))+'.');
+      li.push('Mobile crowd with no wire (people testing on mobile where no wired test exists): '+list(topBy(L,'mob',6).filter(function(l){return l.mob>0}).map(function(l){ return l.name+' <b>'+fmt(l.mob)+'</b>'; }))+'.');
+      li.push('Someone is wiring now (cells that gained 3+ wired devices since Apr 25): '+list(topBy(L,'newly',6).filter(function(l){return l.newly>0}).map(function(l){ return l.name+' <b>'+l.newly+'</b>'; }))+'.');
+      li.push('Wired but slow, switch targets: '+list(topBy(L.filter(function(l){return l.verdict==='SWITCH - SLOW LINES'}),'homes',6).map(function(l){ return l.name+' <b>'+l.mbps+' Mbps</b>'; }))+'.');
+    } else {
+      var c2=D.city, R=(c2._rows||[]).filter(function(d){return d[9]===D.loc}), n=R.length;
+      var unwC=R.filter(function(d){return d[10]<3}), unwH=sum(unwC,function(d){return d[2]}), hmC=sum(R,function(d){return d[2]});
+      var never=R.filter(function(d){return d[10]===0}), newly=R.filter(function(d){return d.length>19&&d[13]===0&&d[18]>=3}), mob=sum(never,function(d){return d[12]});
+      h='Inside '+D.loc;
+      li.push('<b>'+unwC.length+'</b> of <b>'+n+'</b> cells have under 3 wired-test devices; they hold <b>'+fmt(unwH)+'</b> of <b>'+fmt(hmC)+'</b> homes ('+(hmC?Math.round(100*unwH/hmC):0)+'%).');
+      li.push('<b>'+never.length+'</b> cells were never tested on a wire at all ('+fmt(sum(never,function(d){return d[2]}))+' homes); <b>'+newly.length+'</b> cells got wired since Apr 25.');
+      if(c2.yearly){ var b23=sum(R,function(d){return d[8]}), n3=sum(R,function(d){return Math.max(d[8]-d[7],0)}); li.push('New buildings 2020 to 2023: <b>'+fmt(n3)+'</b>, '+(b23?Math.round(100*n3/b23):0)+'% of the 2023 count (observed).'); }
+      else { var nsq=sum(R,function(d){return d[4]}); li.push('New 100 m squares since 2015: <b>'+nsq+'</b> of '+(n*25)+' ('+(n?Math.round(100*nsq/(n*25)):0)+'%).'); }
+      li.push('Mobile-only test devices in the untested cells: <b>'+fmt(mob)+'</b>.');
+    }
+    box.hidden=false; box.innerHTML='<h3>'+h+'</h3><ul>'+li.map(function(x){return '<li>'+x+'</li>'}).join('')+'</ul>';
+  }
+
+  function currentRows(){ if(D.level==='states') return stateRows(); if(D.level==='cities') return cities.filter(function(c){return !D.state||c.state===D.state}); if(D.level==='locs') return (D.city._locs||[]).slice(); return (D.city._rows||[]).filter(function(d){return d[9]===D.loc}); }
+  function currentCols(){ if(D.level==='states') return STATE_COLS; if(D.level==='cities') return CITY_COLS; if(D.level==='locs') return LOC_COLS; return CELL_COLS.filter(function(c){return !c.yearly||D.city.yearly}); }
+  function renderData(){
+    var cr=$('#dcrumbs'), tl=$('#dtools');
+    cr.innerHTML='<a data-lv="cities">India, 100 cities</a>'+(D.level==='states'?' &rsaquo; <span>by state</span>':'')+(D.state&&D.level!=='states'?' &rsaquo; <a data-lv="state">'+D.state+'</a>':'')+(D.city?' &rsaquo; <a data-lv="locs">'+D.city.city+'</a>':'')+(D.loc?' &rsaquo; <span>'+D.loc+'</span>':'');
+    Array.prototype.forEach.call(cr.querySelectorAll('a'),function(a){ a.addEventListener('click',function(){ var lv=a.getAttribute('data-lv'); if(lv==='cities'){ D.state=null; D.city=null; D.loc=null; D.level='cities'; } else if(lv==='state'){ D.city=null; D.loc=null; D.level='cities'; } else { D.loc=null; D.level='locs'; } D.sortKey=null; D.q=''; renderData(); }); });
+    tl.innerHTML='<input id="dq" type="search" placeholder="Filter rows" value="'+D.q.replace(/"/g,'&quot;')+'"><button type="button" id="dcopy">Copy as CSV</button>'+(D.level==='cities'&&!D.state?'<button type="button" id="dstate">By state</button>':'')+(D.city?'<button type="button" id="dmap">Show on map</button>':'')+'<span class="kv" id="dcount"></span>';
+    if($('#dstate')){ $('#dstate').addEventListener('click',function(){ D.level='states'; D.sortKey=null; D.q=''; renderData(); }); }
+    $('#dq').addEventListener('input',function(){ D.q=this.value; drawTable(); });
+    $('#dcopy').addEventListener('click',copyCSV);
+    if(D.city){ $('#dmap').addEventListener('click',function(){ var c=D.city, name=D.loc; showTab('map'); openCity(c.slug); if(name){ var tries=0; (function wait(){ if(c._rows&&c._locs&&c._locs.length){ focusLocality(c,name); } else if(tries++<40){ setTimeout(wait,250); } })(); } }); }
+    renderDefs();
+    if(D.level==='cities'||D.level==='states'){ drawTable(); } else { $('#dtable').innerHTML='<div class="kv" style="padding:12px">Loading&hellip;</div>'; loadCity(D.city).then(drawTable); }
+  }
+  function drawTable(){
+    var cols=currentCols(), rows=currentRows(), q=(D.q||'').toLowerCase();
+    if(q) rows=rows.filter(function(r){ return cols.some(function(c){ var v=c.f(r); return v!=null&&String(v).toLowerCase().indexOf(q)>=0; }); });
+    if(D.sortKey==null||D.sortKey>=cols.length){ var dflt=cols.filter(function(c){return c.l==='Unwired homes'})[0]||cols.filter(function(c){return c.l==='Homes'})[0]||cols[0]; D.sortKey=cols.indexOf(dflt); D.sortDir=-1; }
+    var sc=cols[D.sortKey];
+    rows.sort(function(a,b){ var x=sc.f(a), y=sc.f(b); if(typeof x==='string'||typeof y==='string') return String(x==null?'':x).localeCompare(String(y==null?'':y))*D.sortDir; return ((x==null?-1e18:x)-(y==null?-1e18:y))*D.sortDir; });
+    var head='<tr>'+cols.map(function(c,i){ return '<th class="'+(c.left?'l':'')+'" data-i="'+i+'" title="'+String(DEFS[c.l]||c.title||'').replace(/"/g,'&quot;')+'">'+c.l+(D.sortKey===i?(D.sortDir<0?' &#9660;':' &#9650;'):'')+'</th>'; }).join('')+'</tr>';
+    var labelCol=D.level==='cells'?null:cols.filter(function(c){return c.left})[0];
+    var tot='<tr class="tot">'+cols.map(function(c){
+      if(c.left||c.l==='#'||c.l==='Lat'||c.l==='Lng') return '<td class="'+(c.left?'l':'')+'">'+(c===labelCol?'Total, '+rows.length+' rows':'')+'</td>';
+      var s=0,n=0; rows.forEach(function(r){ var x=c.f(r); if(typeof x==='number'&&isFinite(x)){ s+=x; n++; } });
+      var isAvg=/%|Mbps|\(pt\)|Growth/.test(c.l); var val=c.tot?c.tot(rows):(n?(isAvg?s/n:s):null);
+      return '<td>'+(val==null?'':(isAvg?((Math.round(val*10)/10)+(/%/.test(c.l)?'%':'')):(c.fmt||fmt)(Math.round(val))))+'</td>'; }).join('')+'</tr>';
+    var body=rows.map(function(r){ var click=D.level!=='cells'; var key=D.level==='cities'?r.slug:D.level==='locs'?r.name:D.level==='states'?r.state:''; return '<tr class="'+(click?'click':'')+'" data-key="'+String(key).replace(/"/g,'&quot;')+'">'+cols.map(function(c){ var v=c.f(r); var txt=v==null?'':(c.fmt?c.fmt(v):v); if(c.badge&&v) txt='<span class="badge '+c.badge(r)+'" title="'+String(c.why?c.why(r):'').replace(/"/g,'&quot;')+'">'+v+'</span>'; return '<td class="'+(c.left?'l':'')+(c.wrap?' wrap':'')+'">'+txt+'</td>'; }).join('')+'</tr>'; }).join('');
+    $('#dtable').innerHTML='<table class="dt"><thead>'+head+'</thead><tbody>'+tot+body+'</tbody></table>';
+    renderInsights();
+    $('#dcount').textContent=rows.length+' rows'+(D.level==='cells'?' of 500 m cells':'')+'. Click a column to sort'+(D.level!=='cells'?', a row to drill down.':'.')+' Totals row: sums for counts; wired share and new share weighted by homes and buildings; other rates are plain averages.';
+    Array.prototype.forEach.call(document.querySelectorAll('#dtable th'),function(th){ th.addEventListener('click',function(){ var i=+th.getAttribute('data-i'); if(D.sortKey===i) D.sortDir=-D.sortDir; else { D.sortKey=i; D.sortDir=-1; } drawTable(); }); });
+    Array.prototype.forEach.call(document.querySelectorAll('#dtable tr.click'),function(tr){ tr.addEventListener('click',function(){ var k=tr.getAttribute('data-key'); if(D.level==='states'){ D.state=k; D.level='cities'; } else if(D.level==='cities'){ D.city=cities.filter(function(c){return c.slug===k})[0]; D.level='locs'; } else { D.loc=k; D.level='cells'; } D.sortKey=null; D.q=''; renderData(); }); });
+  }
+  function copyCSV(){ var cols=currentCols(), rows=currentRows(); var lines=[cols.map(function(c){return '"'+c.l.replace(/"/g,'""')+'"'}).join(',')].concat(rows.map(function(r){ return cols.map(function(c){ var v=c.f(r); return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }).join(','); })); var txt=lines.join('\n'); var done=function(){ $('#dcount').textContent='Copied '+rows.length+' rows as CSV to the clipboard.'; }; if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(done).catch(function(){ fallbackCopy(txt,done); }); } else fallbackCopy(txt,done); }
+  function fallbackCopy(txt,done){ var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); done(); }catch(e){} document.body.removeChild(ta); }
+
+
+  /* ---------- invest tab: the executive view, rendered from data/strategy.json ---------- */
+  var INV=null, INV_ALL=false;
+  var STRAT={'White-space':{cls:'ws',name:'White-space',why:'under half the homes near any wire'},'New-area early mover':{cls:'new',name:'New areas',why:'built since 2015 and not yet full'},'Share capture in contested areas':{cls:'share',name:'Share capture',why:'50 to 85% wired, gaps of 500+ homes'},'Densification':{cls:'dens',name:'Densification',why:'needs Airtel passes data'}};
+  function esc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function renderInvest(){
+    var box=$('#invcontent'); if(!box) return;
+    if(INV&&INV.research!==undefined){ drawInvest(); return; }
+    box.innerHTML='<div class="kv" style="padding:40px 0">Loading the investment view&hellip;</div>';
+    INVP.then(function(){ if(!INV) throw 0; return fetch('data/research.json',{cache:'no-cache'}).then(function(r){ return r.ok?r.json():null; }).catch(function(){ return null; }); }).then(function(res){ INV.research=res; drawInvest(); }).catch(function(){ box.innerHTML='<div class="chip flag">Could not load data/strategy.json</div>'; });
+  }
+  function jumpToLocality(slug,name){ var c=cities.filter(function(x){return x.slug===slug})[0]; if(!c) return; metric='plan'; c._fitted=false; showTab('map'); openCity(slug); var tries=0; (function wait(){ if(c._rows&&c._locs&&c._locs.length){ if(name) focusLocality(c,name); } else if(tries++<40){ setTimeout(wait,250); } })(); }
+  function hbar(rows,o){
+    o=o||{}; var W=1000, rowH=27, left=o.left||250, right=96, max=Math.max.apply(null,rows.map(function(r){return r.total})), H=rows.length*rowH+10, inner=W-left-right;
+    var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.aria||'')+'">';
+    [0.25,0.5,0.75,1].forEach(function(t){ var x=left+inner*t; s+='<line class="grid" x1="'+x+'" y1="2" x2="'+x+'" y2="'+(H-4)+'"/>'; });
+    rows.forEach(function(r,i){ var y=i*rowH+4, x=left;
+      s+='<g class="'+(r.slug?'click':'')+'" data-slug="'+esc(r.slug||'')+'">';
+      if(r.tier){ s+='<rect class="tchip t'+r.tier+'" x="'+(left-44)+'" y="'+(y+4)+'" width="30" height="15" rx="7.5"/><text class="tlab t'+r.tier+'" x="'+(left-29)+'" y="'+(y+15)+'" text-anchor="middle">T'+r.tier+'</text>'; }
+      s+='<text class="lbl" x="'+(left-(r.tier?52:12))+'" y="'+(y+16)+'" text-anchor="end">'+esc(r.label)+'</text>';
+      r.segs.forEach(function(g){ var w=inner*g.v/max; if(w>0){ s+='<rect class="f-'+g.cls+'" x="'+x.toFixed(1)+'" y="'+(y+4)+'" width="'+w.toFixed(1)+'" height="16" rx="2"><title>'+esc(g.title||'')+'</title></rect>'; x+=w; } });
+      s+='<text class="val" x="'+(x+8).toFixed(1)+'" y="'+(y+16)+'">'+esc(r.value)+'</text></g>';
+    });
+    return s+'</svg>';
+  }
+  function tierOf(score){ var t=INV.tiers; return score>=t.T1?1:score>=t.T2?2:score>=t.T3?3:4; }
+  /* ---------- invest tab v2: every sentence with a number is built from strategy.json / research.json ---------- */
+  function rs(n){ n=+n||0; var neg=n<0; n=Math.abs(n); var s=n>=1e7?(n/1e7).toFixed(n>=1e9?0:1).replace(/\.0$/,'')+' cr':n>=1e5?(n/1e5).toFixed(1).replace(/\.0$/,'')+' L':fmt(Math.round(n)); return (neg?'&minus;':'')+'&#8377;'+s; }
+  function mn(m){ return fmtIN(m*1e6); }
+  function fL(n){ return (n/1e5).toFixed(1)+' L'; }
+  function yrs(mo){ return mo==null?'not within 10 years':(mo/12).toFixed(1).replace(/\.0$/,'')+' years (month '+mo+')'; }
+  function pc(x,d){ return (Math.round(x*Math.pow(10,d||0))/Math.pow(10,d||0))+'%'; }
+  function list(a){ return a.length<=1?a.join(''):a.slice(0,-1).join(', ')+' and '+a[a.length-1]; }
+  function sec(id,title,lead,body){ return '<section id="'+id+'"><h2>'+title+'</h2>'+(lead?'<p class="sub">'+lead+'</p>':'')+body+'</section>'; }
+  function lineChart(o){
+    var W=o.w||1000,H=o.h||300,L=o.l||64,R=o.r||24,T=16,B=36, xs=o.x, n=xs.length, ymin=o.ymin!=null?o.ymin:0, ymax=o.ymax;
+    if(ymax==null){ ymax=-1e18; o.series.forEach(function(s){ s.v.forEach(function(v){ if(v!=null&&v>ymax) ymax=v; }); }); }
+    if(o.ymin==null){ o.series.forEach(function(s){ s.v.forEach(function(v){ if(v!=null&&v<ymin) ymin=v; }); }); }
+    var X=function(i){ return L+(W-L-R)*(n===1?0.5:i/(n-1)); }, Y=function(v){ return T+(H-T-B)*(1-(v-ymin)/((ymax-ymin)||1)); };
+    var s='<svg class="chart" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(o.aria||'')+'">';
+    (o.ticks||[]).forEach(function(t){ s+='<line class="grid" x1="'+L+'" y1="'+Y(t)+'" x2="'+(W-R)+'" y2="'+Y(t)+'"/><text class="val" x="'+(L-8)+'" y="'+(Y(t)+4)+'" text-anchor="end">'+(o.yfmt?o.yfmt(t):t)+'</text>'; });
+    if(ymin<0&&ymax>0) s+='<line x1="'+L+'" y1="'+Y(0)+'" x2="'+(W-R)+'" y2="'+Y(0)+'" stroke="var(--ink)" stroke-width="1"/>';
+    (o.xlab||[]).forEach(function(p){ s+='<text class="val" x="'+X(p[0])+'" y="'+(H-12)+'" text-anchor="middle">'+p[1]+'</text>'; });
+    o.series.forEach(function(sr){ var d=''; sr.v.forEach(function(v,i){ if(v==null) return; d+=(d?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1); });
+      s+='<path d="'+d+'" fill="none" stroke="'+sr.color+'" stroke-width="'+(sr.w||2.6)+'"'+(sr.dash?' stroke-dasharray="'+sr.dash+'"':'')+' stroke-linejoin="round"/>';
+      var li=sr.v.length-1; while(li>0&&sr.v[li]==null) li--; if(sr.label) s+='<text class="lbl" x="'+(X(li)-6)+'" y="'+(Y(sr.v[li])-8)+'" text-anchor="end" style="fill:'+sr.color+';font-weight:600">'+sr.label+'</text>';
+      (sr.marks||[]).forEach(function(mk){ s+='<circle cx="'+X(mk[0])+'" cy="'+Y(sr.v[mk[0]])+'" r="5" fill="'+sr.color+'" stroke="var(--panel)" stroke-width="2"/><text class="val" x="'+(X(mk[0])+8)+'" y="'+(Y(sr.v[mk[0]])+16)+'">'+mk[1]+'</text>'; }); });
+    return s+'</svg>';
+  }
+  function invTOC(){ var a=[['inv-answers','The answers'],['inv-market','Market'],['inv-outlook','Outlook'],['inv-rivals','Competitors'],['inv-opportunity','Opportunity'],['inv-scorecard','Scorecard'],['inv-plan','The plan'],['inv-battle','Battlecards'],['inv-localities','Localities'],['inv-money','Business case'],['inv-roadmap','Roadmap'],['inv-recommend','Recommendation'],['inv-gaps','Still missing'],['inv-evidence','Evidence'],['inv-sources','Sources']];
+    return '<nav class="toc" aria-label="Sections">'+a.map(function(x){ return '<a data-go="'+x[0]+'">'+x[1]+'</a>'; }).join('')+'</nav>'; }
+
+  function drawInvest(){
+    var box=$('#invcontent'), T=INV.totals, F=INV.finance, B=F.scenarios.base, D=F.scenarios.down, U=F.scenarios.up, M=INV.market, O=INV.outlook;
+    var ac=INV.alloc_city.slice().sort(function(a,b){return b.passes-a.passes}), sc=INV.scorecard.slice().sort(function(a,b){return b.score-a.score});
+    var byCity={}; sc.forEach(function(r){ byCity[r.city]=r; });
+    var st=INV.alloc_state.slice().sort(function(a,b){return b.passes-a.passes}), capped=st.filter(function(x){return x.passes>=INV.state_cap}).map(function(x){return x.state});
+    var t1=sc.filter(function(r){return r.tier===1});
+    var fixedNow=M.wired+M.fwa, penHi=100*fixedNow/O.households.low, penLo=100*fixedNow/O.households.high;
+    var h='';
+    /* hero */
+    h+='<div class="inv-hero"><div><div class="inv-kicker">Airtel Broadband &middot; Version 2 &middot; as of '+esc(INV.asof)+'</div><h1>Where the next 5 lakh home passes go</h1>'+
+      '<p class="inv-lead"><b>'+fmt(T.passes)+'</b> passes across <b>'+ac.length+'</b> cities and <b>'+INV.alloc_loc.length+'</b> localities. '+(capped.length?list(capped)+' each reach the '+fmt(INV.state_cap)+'-per-state cap; ':'')+st.filter(function(x){return capped.indexOf(x.state)<0}).slice(0,4).map(function(x){return x.state+' <b>'+fmt(x.passes)+'</b>'}).join(', ')+' follow. At Airtel\'s own stated costs the base case pays back in about <b>'+(B.payback_month?(B.payback_month/12).toFixed(1):'&gt;10')+'</b> years and returns <b>'+B.irr10+'%</b> a year over ten years; take-up decides whether it works. Airtel\'s own passes and customers by locality are not in this yet.</p></div>'+
+      '<div class="kpis"><div class="kpi hi"><b>'+fmtIN(T.passes)+'</b><span>Home passes</span><small>exactly 5,00,000</small></div><div class="kpi"><b>'+fL(B.subs36)+'</b><span>Customers at 36 months</span><small>base case; '+fL(D.subs36)+' to '+fL(U.subs36)+'</small></div><div class="kpi"><b>'+rs(B.rev_year3)+'</b><span>Revenue in year 3</span><small>base case</small></div>'+
+      '<div class="kpi"><b>'+rs(B.net_capex)+'</b><span>Network build</span><small>at &#8377;'+fmt(F.inputs[0].base)+' per pass</small></div><div class="kpi"><b>'+(B.payback_month?(B.payback_month/12).toFixed(1)+' yrs':'none')+'</b><span>Payback, base</span><small>'+(U.payback_month?(U.payback_month/12).toFixed(1)+' yrs upside':'')+(D.payback_month?'':'; never in downside')+'</small></div><div class="kpi"><b>'+B.irr10+'%</b><span>10-year return a year</span><small>'+D.irr10+'% to '+U.irr10+'%</small></div></div></div>';
+    h+=invTOC();
+
+    /* 1. answers */
+    var rivalsJio=INV.circles.filter(function(c){return c.main_rival==='Jio'}).length, airLeads=INV.circles.filter(function(c){return c.leader==='Airtel'}).map(function(c){return c.circle});
+    var stPri=st.slice(0,4).map(function(x){ var c=sc.filter(function(r){return r.state===x.state})[0]; return x.state+(c?' (Airtel '+c.airtel_vs_jio_all+'% of Airtel and Jio home connections)':''); });
+    var regs={}; ac.forEach(function(r){ var s=byCity[r.city]; (s&&s.regionals?s.regionals.split('; '):[]).forEach(function(o){ if(o) regs[o]=(regs[o]||0)+1; }); });
+    var regTop=Object.keys(regs).sort(function(a,b){return regs[b]-regs[a]}).slice(0,3).map(function(o){return o+' ('+regs[o]+' of the '+ac.length+' cities)'});
+    var A=[
+      ['How large is India\'s broadband opportunity today?', 'India has <b>'+mn(M.wired)+'</b> wired broadband lines and <b>'+mn(M.fwa)+'</b> fixed-wireless homes ('+esc(M.asof)+'): <b>'+mn(fixedNow)+'</b> fixed connections, <b>'+Math.round(penLo)+' to '+Math.round(penHi)+'%</b> of India\'s <b>'+(O.households.low/10).toFixed(1)+' to '+(O.households.high/10).toFixed(1)+' crore</b> households. So '+Math.round(100-penHi)+' to '+Math.round(100-penLo)+'% of homes have no fixed connection, most of them rural and mobile-only. In the 100 largest city regions the grid finds <b>'+fmtIN(T.homes)+'</b> homes, of which <b>'+fmtIN(T.unwired)+'</b> sit in patches with no wired activity and signs of life: the near-term pool.'],
+      ['Which states and cities offer the most commercially viable opportunity?', 'On the version-2 score, which weighs Airtel\'s strength against Jio and state income alongside the size of the pool, <b>'+t1.length+'</b> cities reach Tier 1: '+list(t1.map(function(r){return r.city}))+'. By state the plan concentrates in '+list(stPri)+'.'],
+      ['Who is Airtel\'s main competitor in each priority market?', 'Jio, in <b>'+rivalsJio+'</b> of the 22 telecom circles once its fixed-wireless homes are counted; BSNL in Kerala. Airtel leads only '+list(airLeads)+'. In the priority states: '+list(stPri)+'. Regional operators that list the most plan cities: '+(regTop.length?list(regTop):'none')+'. City-level shares are not published by anyone; these are circle figures.'],
+      ['Where should Airtel deploy the next 5 lakh home passes?', list(ac.slice(0,8).map(function(r){return r.city+' <b>'+fmt(r.passes)+'</b>'}))+', and '+(ac.length-8)+' more cities with smaller blocks. The full list of '+INV.alloc_loc.length+' localities is in the Localities section and on the map\'s "The plan" layer.'],
+      ['How should they be allocated, and why?', 'By one rule anyone can re-run: localities inside the built-up area, with signs of life, and at least '+INV.guards.pool_min+' homes with no wired activity, ranked by city score, pool size and newness. Three buckets: white-space <b>'+fmt(INV.quota['White-space'])+'</b>, new areas <b>'+fmt(INV.quota['New-area early mover'])+'</b>, share capture <b>'+fmt(INV.quota['Share capture in contested areas'])+'</b>. No city above '+fmt(INV.city_cap)+' and no state above '+fmt(INV.state_cap)+'. Built in three phases with the last '+fmtIN(INV.phases[2].passes)+' passes held back as a reserve.'],
+      ['How many subscribers and what returns?', 'Base case: <b>'+fmt(B.subs12)+'</b> customers at 12 months, <b>'+fmt(B.subs24)+'</b> at 24 and <b>'+fmt(B.subs36)+'</b> at 36; <b>'+rs(B.rev_month36)+'</b> revenue a month by month 36. Network build <b>'+rs(B.net_capex)+'</b>, connecting and replacing customers <b>'+rs(B.conn_capex)+'</b> over ten years, peak funding <b>'+rs(B.peak_funding)+'</b>. Payback about <b>'+(B.payback_month/12).toFixed(1)+'</b> years; ten-year return <b>'+B.irr10+'%</b> a year, from '+D.irr10+'% in the downside to '+U.irr10+'% in the upside.'],
+      ['What should Airtel track monthly?', 'Customers per 100 passes by locality and age of pass (gate: <b>'+INV.gates.month6_per100+'</b> by month 6, <b>'+INV.gates.month12_per100+'</b> by month 12), cost per pass against a ceiling of &#8377;'+fmt(INV.gates.cost_ceiling)+', new-customer revenue, the share on converged plans, competitor wired activity in planned localities, and the regulator\'s monthly circle tables.']
+    ];
+    h+=sec('inv-answers','The answers','The seven questions the brief asks, answered from the sections below.','<div class="answers">'+A.map(function(a,i){ return '<div class="ans"><span class="n">'+(i+1)+'</span><h4>'+a[0]+'</h4><p>'+a[1]+'</p></div>'; }).join('')+'</div>');
+
+    /* 2. market */
+    var yrs6=['Mar-21','Mar-22','Mar-23','Mar-24','Mar-25','Mar-26','Aug-26'];
+    var bars=yrs6.map(function(y){ return {y:y,w:O.wired[y],f:O.fwa[y]}; }); bars.push({y:'Mar-27',w:O.fy27.base.wired,f:O.fy27.base.fwa,proj:true,lo:O.fy27.down.total,hi:O.fy27.up.total});
+    var Wc=560,Hc=340,Lc=34,Bc=36,Tc=14,maxv=80,bw=(Wc-Lc-20)/bars.length, Yc=function(v){ return Tc+(Hc-Tc-Bc)*(1-v/maxv); };
+    var g='<svg class="chart" viewBox="0 0 '+Wc+' '+Hc+'" role="img" aria-label="Fixed connections in India by year">';
+    [0,20,40,60,80].forEach(function(t){ g+='<line class="grid" x1="'+Lc+'" y1="'+Yc(t)+'" x2="'+(Wc-20)+'" y2="'+Yc(t)+'"/><text class="val" x="'+(Lc-8)+'" y="'+(Yc(t)+4)+'" text-anchor="end">'+t+'</text>'; });
+    bars.forEach(function(b,i){ var x=Lc+i*bw+bw*0.18, w=bw*0.64, op=b.proj?' fill-opacity="0.45" stroke-dasharray="4 3"':'';
+      g+='<rect x="'+x+'" y="'+Yc(b.w)+'" width="'+w+'" height="'+(Yc(0)-Yc(b.w))+'" class="f-acc"'+op+' stroke="var(--accent)"/><rect x="'+x+'" y="'+Yc(b.w+b.f)+'" width="'+w+'" height="'+(Yc(b.w)-Yc(b.w+b.f))+'" class="f-new"'+op+' stroke="var(--st-new)"/>';
+      if(b.proj){ g+='<line x1="'+(x+w/2)+'" y1="'+Yc(b.hi)+'" x2="'+(x+w/2)+'" y2="'+Yc(b.lo)+'" stroke="var(--ink)" stroke-width="1.5"/><line x1="'+(x+w/2-8)+'" y1="'+Yc(b.hi)+'" x2="'+(x+w/2+8)+'" y2="'+Yc(b.hi)+'" stroke="var(--ink)" stroke-width="1.5"/><line x1="'+(x+w/2-8)+'" y1="'+Yc(b.lo)+'" x2="'+(x+w/2+8)+'" y2="'+Yc(b.lo)+'" stroke="var(--ink)" stroke-width="1.5"/>'; }
+      g+='<text class="val" x="'+(x+w/2)+'" y="'+(Yc(b.w+b.f)-(b.proj?Yc(b.w+b.f)-Yc(b.hi)+8:8))+'" text-anchor="middle" style="fill:var(--ink);font-weight:600">'+(b.w+b.f).toFixed(1)+'</text><text class="val" x="'+(x+w/2)+'" y="'+(Hc-12)+'" text-anchor="middle">'+b.y.replace('-',' ')+(b.proj?'*':'')+'</text>'; });
+    g+='</svg>';
+    var hist=M.ops_hist, hk=Object.keys(hist), opsCol={Jio:'var(--st-share)',Airtel:'var(--accent)',BSNL:'var(--muted)',ACT:'var(--st-new)'};
+    var opsChart=lineChart({x:hk,xlab:hk.map(function(k,i){return [i,k]}),ymax:16,ticks:[0,4,8,12,16],h:340,w:560,l:40,r:16,aria:'Wired broadband lines by operator',
+      series:['Jio','Airtel','BSNL','ACT'].map(function(o){ return {label:o+' '+hist['Aug-26'][o],color:opsCol[o],v:hk.map(function(k){return hist[k][o]})}; })});
+    var mk='<div class="kpis k4"><div class="kpi"><b>'+mn(M.wired)+'</b><span>Wired lines</span><small>'+M.fttx_share+'% of them fibre</small></div><div class="kpi"><b>'+mn(M.fwa)+'</b><span>Fixed-wireless homes</span><small>'+mn(M.fwa_ops.Jio)+' Jio, '+mn(M.fwa_ops.Airtel)+' Airtel</small></div><div class="kpi"><b>'+Math.round(penLo)+'&ndash;'+Math.round(penHi)+'%</b><span>Homes with a fixed connection</span><small>wired plus fixed wireless</small></div><div class="kpi"><b>'+pc(100*M.ops_aug26[1][1]/M.wired,1)+'</b><span>Airtel share of wired</span><small>second to Jio '+pc(100*M.ops_aug26[0][1]/M.wired,1)+'</small></div></div>';
+    h+=sec('inv-market','The market today','Regulator figures, end of August 2026 ('+esc(M.asof_src)+'), unless marked. Wired lines are '+pc(100*M.wired/(M.wired+M.fwa+M.mobile),1)+' of all broadband connections yet carried '+M.wired_data_share+'% of the data in April to June 2026.',
+      mk+'<div class="twocol"><div><h4 class="ch">Fixed connections, million <span class="legend-inline"><i class="c-ws"></i>wired <i class="c-new"></i>fixed wireless</span></h4>'+g+'<p class="tiny">Fixed wireless before March 2025 is only Wi-Fi, radio and satellite; 5G fixed wireless starts in 2024-25. * March 2027 is modelled: the bar is the base case and the whisker the downside-to-upside range of the total.</p></div>'+
+      '<div><h4 class="ch">Wired lines by operator, million</h4>'+opsChart+'<p class="tiny">March 2025 carries Jio\'s and Airtel\'s November 2024 filings, so that year understates their growth and the next overstates it. Airtel\'s wired base is '+(hist['Aug-26'].Airtel/hist['Mar-21'].Airtel).toFixed(1)+' times its March 2021 size; Jio\'s is '+(hist['Aug-26'].Jio/hist['Mar-21'].Jio).toFixed(1)+' times.</p></div></div>'+
+      '<details class="defs"><summary>Six different counts of "home broadband" are in circulation; this tab uses the regulator\'s wired figure for shares</summary><div class="tablewrap"><table class="dt"><thead><tr><th class="l">Definition</th><th>Count</th><th class="l">As of</th><th class="l">What it includes</th></tr></thead><tbody>'+M.definitions.map(function(d){ return '<tr><td class="l">'+esc(d.name)+'</td><td>'+mn(d.count)+'</td><td class="l">'+esc(d.period)+'</td><td class="l" style="white-space:normal">'+esc(d.note)+'</td></tr>'; }).join('')+'</tbody></table></div></details>');
+
+    /* 3. outlook */
+    var oc=[['Wired lines','wired',mn],['Fixed-wireless homes','fwa',mn],['All fixed connections','total',mn],['Wired added in the year','wired_adds',mn],['Fixed wireless added in the year','fwa_adds',mn]];
+    var otab='<div class="tablewrap"><table class="dt"><thead><tr><th class="l"></th><th>FY2026 actual<br><span class="tiny">to Mar 2026</span></th><th>FY2027 downside</th><th>FY2027 base</th><th>FY2027 upside</th></tr></thead><tbody>'+
+      oc.map(function(r){ return '<tr><td class="l">'+r[0]+'</td><td><b>'+r[2](O.fy26[r[1]])+'</b></td><td>'+r[2](O.fy27.down[r[1]])+'</td><td><b>'+r[2](O.fy27.base[r[1]])+'</b></td><td>'+r[2](O.fy27.up[r[1]])+'</td></tr>'; }).join('')+
+      '<tr><td class="l">Homes with a fixed connection</td><td><b>'+O.fy26.pen_low+'&ndash;'+O.fy26.pen_high+'%</b></td><td>'+O.fy27.down.pen_low+'&ndash;'+O.fy27.down.pen_high+'%</td><td><b>'+O.fy27.base.pen_low+'&ndash;'+O.fy27.base.pen_high+'%</b></td><td>'+O.fy27.up.pen_low+'&ndash;'+O.fy27.up.pen_high+'%</td></tr></tbody></table></div>';
+    h+=sec('inv-outlook','Outlook: FY2026 actual, FY2027 modelled','No research house publishes an FY2027 industry forecast, so FY2027 is modelled from the regulator\'s run-rate since March 2026: <b>'+O.wired_rate.toFixed(2)+' million</b> wired and <b>'+O.fwa_rate.toFixed(2)+' million</b> fixed-wireless homes a month. Downside halves both; upside returns wired to the FY2023-24 pace and lifts wireless by a fifth. The household range ('+(O.households.low/10).toFixed(1)+' to '+(O.households.high/10).toFixed(1)+' crore) moves penetration by four points on its own.',
+      otab+'<div class="twocol" style="margin-top:14px"><div><h4 class="ch">Published forecasts</h4><ul class="plain">'+O.published.map(function(p){ return '<li><b>'+esc(p.who)+'</b> ('+esc(p.when)+'): '+esc(p.what)+'. <span class="tiny">'+esc(p.status)+'</span></li>'; }).join('')+'</ul></div>'+
+      '<div><h4 class="ch">What shifts it</h4><ul class="plain"><li><b>Wireless is slowing.</b> Airtel cut its 5G fixed-wireless additions from 6.7 lakh to 0.8 lakh a quarter in April to June 2026 as router costs rose; Jio\'s additions roughly halved from their peak.</li><li><b>Consolidation.</b> Jio and Airtel hold '+pc(100*(M.ops_aug26[0][1]+M.ops_aug26[1][1])/M.wired)+' of wired lines and most of the growth; operators outside the top five grew 3.6% while the market grew 8.5% (Oct 2025 to Aug 2026).</li><li><b>Demand.</b> 60 crore people watch streaming video and about 15 crore paid subscriptions exist (Ormax 2025); 6.8 crore homes have a connected TV (FICCI-EY 2026); 36% of workers are hybrid and 14% fully remote (ADP 2025).</li><li><b>Prices.</b> Airtel\'s revenue per home has fallen eight quarters running, from &#8377;572 to &#8377;523, as new homes join cheaper bundles.</li></ul></div></div>');
+
+    /* 4. competitors */
+    var C=INV.circles, cw=1000, ch=C.length*24+30, cl=170, cr=150, inner=cw-cl-cr;
+    var cs='<svg class="chart" viewBox="0 0 '+cw+' '+ch+'" role="img" aria-label="Airtel versus Jio share of home connections by circle">';
+    cs+='<line x1="'+(cl+inner/2)+'" y1="4" x2="'+(cl+inner/2)+'" y2="'+(ch-20)+'" stroke="var(--ink)" stroke-dasharray="3 3"/><text class="val" x="'+(cl+inner/2)+'" y="'+(ch-6)+'" text-anchor="middle">50%</text><text class="val" x="'+cl+'" y="'+(ch-6)+'">Airtel share &rarr;</text><text class="val" x="'+(cl+inner)+'" y="'+(ch-6)+'" text-anchor="end">&larr; Jio share</text>';
+    C.forEach(function(c,i){ var y=i*24+4, a=c.airtel_vs_jio_all/100; cs+='<text class="lbl" x="'+(cl-10)+'" y="'+(y+15)+'" text-anchor="end">'+esc(c.circle)+'</text><rect x="'+cl+'" y="'+(y+3)+'" width="'+(inner*a)+'" height="16" class="f-acc"/><rect x="'+(cl+inner*a)+'" y="'+(y+3)+'" width="'+(inner*(1-a))+'" height="16" class="f-share"/>'+
+      '<text x="'+(cl+6)+'" y="'+(y+15)+'" style="font:600 11px var(--mono);fill:#fff">'+c.airtel_vs_jio_all.toFixed(1)+'%</text><text x="'+(cl+inner-6)+'" y="'+(y+15)+'" text-anchor="end" style="font:600 11px var(--mono);fill:#fff">'+(100-c.airtel_vs_jio_all).toFixed(1)+'%</text>'+
+      '<text class="val" x="'+(cl+inner+10)+'" y="'+(y+15)+'">leader: '+esc(c.leader)+(c.jio_ubr_modelled?' *':'')+'</text>'; });
+    cs+='</svg>';
+    var cards=[
+      ['Jio','Threat: high almost everywhere','<b>'+M.jio.fixed_broadband+' million</b> fixed broadband homes ('+M.jio.period+'), about half on AirFiber; '+M.jio.airfiber_share_of_adds+'% of its last-year additions were wireless. First on wired lines too: '+mn(M.ops_aug26[0][1])+'. Entry &#8377;'+M.jio.entry+' for 30 Mbps fibre; &#8377;599 with 13 streaming apps; &#8377;899 for 100 Mbps; AirFiber installation free on annual plans.','<b>Where it is weak:</b> AirFiber downloads averaged 28.6 Mbps against 40.7 for Airtel\'s fixed wireless (Opensignal, Feb to May 2025) and stops full speed after 1,000 GB a month. Additions have slowed from about 3 million to about 1.5 million a quarter. Fibre beats it where Jio leans on wireless.'],
+      ['BSNL','Threat: price, in Kerala, Punjab and Haryana','<b>'+mn(M.ops_aug26[2][1])+'</b> wired lines, a mix of fibre and old copper. Leads Kerala with 58.5% of fixed lines. &#8377;399 for 50 Mbps in the first year. Partners build and run the last mile for a revenue share.','<b>Where it is weak:</b> landline base and revenue both fell about 3% in FY2026; service quality; no streaming bundle at entry.'],
+      ['ACT Fibernet','Threat: high in Bengaluru, Hyderabad, Chennai','<b>'+mn(M.ops_aug26[3][1])+'</b> lines, up 5.5% since Oct 2025; about 35 cities, mostly south. &#8377;549 for 50 Mbps (Chennai), &#8377;799 for 300 Mbps without streaming apps.','<b>Where it is weak:</b> no mobile bundle, no fixed wireless, absent from most of the plan\'s cities.'],
+      ['Excitel','Threat: price per Mbps in its core cities','About <b>1 million</b> homes, profitable in FY2026. 200 Mbps for &#8377;466 a month on a 12-month term. Core cities: Delhi NCR, Bengaluru, Hyderabad, Lucknow, Kanpur, Jaipur, Varanasi. Fastest wired operator in Delhi, Andhra and Karnataka in Opensignal\'s 2025 tests.','<b>Where it is weak:</b> narrowed from 55 cities to a few; no bundle; small service footprint.'],
+      ['Cable groups','Threat: local loyalty; also partners','Hathway 1.0 million, GTPL 1.07 million (Gujarat; &#8377;470 a month; 18% of its 6 million passes take it), Kerala Vision 1.56 million (owned by 6,000+ cable operators), Netplus 0.84 million (Punjab), Asianet 0.46 million (Kerala).','<b>Where they are weak:</b> operators outside the top five grew 3.6% while the market grew 8.5%. Natural partners for Airtel\'s cable-operator model, live in '+fmt(M.airtel.lco_cities)+' cities.'],
+      ['Tata Play Fiber, YOU','Threat: low','Tata Play Fiber lists about 17 cities, 0.63 million homes (Mar 2026). YOU Broadband (Vodafone Idea) lists 22 cities, no count published; the only rival besides Airtel that can bundle home broadband with mobile.','<b>Where they are weak:</b> small, metro-only, slow growth.']];
+    h+=sec('inv-rivals','Who Airtel is up against','No one publishes broadband shares by city. The closest public table is the regulator\'s count of fixed lines by telecom circle, end of August 2026. Below, each bar splits the home connections Airtel and Jio hold in a circle, counting fixed lines and fixed wireless; Tata\'s business lines are left out. Airtel leads Jio only in '+list(C.filter(function(c){return c.airtel_vs_jio_all>50}).map(function(c){return c.circle}))+'.',
+      cs+'<p class="tiny">* Jio\'s unlicensed-band wireless homes are published for the ten largest circles only; for the rest they are split in proportion to Jio\'s 5G fixed wireless there (modelled). Source: <a href="'+esc(INV.circle_src)+'" target="_blank" rel="noopener">TRAI Press Release 125/2026</a>, Annexures I, V and VI.</p>'+
+      '<div class="cards c3">'+cards.map(function(c){ return '<div class="card"><span class="tag">'+c[1]+'</span><h4>'+c[0]+'</h4><p>'+c[2]+'</p><p>'+c[3]+'</p></div>'; }).join('')+'</div>');
+
+    /* 5. opportunity */
+    var fun=function(rows,ttl){ var mx=rows[0][1]; return '<div><h4 class="ch">'+ttl+'</h4>'+rows.map(function(r){ return '<div class="fun"><div class="fl">'+r[0]+'</div><div class="fb"><i style="width:'+Math.max(100*r[1]/mx,0.6)+'%;background:'+(r[3]||'var(--accent)')+'"></i></div><div class="fv">'+r[2]+'</div></div>'; }).join('')+'</div>'; };
+    var nat=[['Households in India',O.households.high*1e6,(O.households.low/10).toFixed(1)+'&ndash;'+(O.households.high/10).toFixed(1)+' cr','var(--muted)'],['Urban households (2022-23)',93.2e6,'9.3 cr','var(--st-share)'],['With a fixed connection',fixedNow*1e6,mn(fixedNow),'var(--accent)'],['Of which wired',M.wired*1e6,mn(M.wired),'var(--accent)']];
+    var grid=[['Homes in the 100 city regions',T.homes,fmtIN(T.homes),'var(--muted)'],['No wired activity, signs of life',T.unwired,fmtIN(T.unwired),'var(--st-new)'],['In localities that qualify',T.candidate_unwired,fmtIN(T.candidate_unwired),'var(--st-share)'],['Allocated in this plan',T.passes,fmtIN(T.passes),'var(--accent)']];
+    var stAlloc={}; INV.alloc_state.forEach(function(x){ stAlloc[x.state]=x.passes; }); var maxU=Math.max.apply(null,INV.states.map(function(x){return x.unwired}));
+    h+=sec('inv-opportunity','Household opportunity','Two views of the same question. Nationally, '+Math.round(100-penHi)+' to '+Math.round(100-penLo)+'% of homes have no fixed connection, but most are rural. In the 100 largest city regions the grid narrows the pool to homes with no wired activity and signs of people, then to localities large enough to wire. Every unconnected home is not a customer: the business case assumes about '+Math.round(F.ramp.base[3][1]*100)+' of every 100 homes passed sign up by year three.',
+      '<div class="twocol">'+fun(nat,'India, households')+fun(grid,'100 city regions, homes')+'</div>'+
+      '<h4 class="ch" style="margin-top:22px">By state</h4><div class="tablewrap"><table class="dt"><thead><tr><th class="l">State</th><th>Cities</th><th>Homes</th><th class="l">Unwired homes</th><th>Share</th><th>Never tested</th><th class="l">Biggest pool</th><th>Passes allocated</th></tr></thead><tbody>'+
+      INV.states.map(function(x){ return '<tr><td class="l">'+esc(x.state)+'</td><td>'+x.cities+'</td><td>'+fmtIN(x.homes)+'</td><td class="l"><span class="bar"><i style="width:'+(100*x.unwired/maxU)+'%"></i></span>'+fmtIN(x.unwired)+'</td><td>'+Math.round(100*x.unwired/x.homes)+'%</td><td>'+fmtIN(x.never)+'</td><td class="l">'+esc(x.best)+' '+fmtIN(x.bestv)+'</td><td>'+(stAlloc[x.state]?fmt(stAlloc[x.state]):'<span class="tiny">0</span>')+'</td></tr>'; }).join('')+
+      '<tr class="tot"><td class="l">Total, '+INV.states.length+' states</td><td>'+INV.states.reduce(function(a,x){return a+x.cities},0)+'</td><td>'+fmtIN(T.homes)+'</td><td class="l">'+fmtIN(T.unwired)+'</td><td>'+Math.round(100*T.unwired/T.homes)+'%</td><td>'+fmtIN(T.never)+'</td><td></td><td>'+fmt(T.passes)+'</td></tr></tbody></table></div>');
+
+    /* 6. scorecard */
+    var W=INV.weights, wk=[['pool','Pool size','m'],['open','Open share','m'],['growth','Growth','m'],['newbuild','New build','m'],['density','Density','m'],['vulnerable','Slow incumbents','m'],['demand','Mobile-only demand','m'],['urgency','Competitor urgency','m'],['airtel','Airtel vs Jio in circle','w'],['afford','Income per head','w']];
+    var mw=0,ww=0; wk.forEach(function(k){ if(k[2]==='m') mw+=W[k[0]]; else ww+=W[k[0]]; });
+    var tc={1:0,2:0,3:0,4:0}; sc.forEach(function(r){ tc[r.tier]++; });
+    var shown=INV_ALL?sc:sc.slice(0,15), mv=sc.slice().sort(function(a,b){return (b.score-b.score_v1)-(a.score-a.score_v1)});
+    h+=sec('inv-scorecard','City scorecard','Version 2 adds Airtel\'s ability to win to the size of the opportunity: <b>'+mw+'</b> points for the market and <b>'+ww+'</b> for Airtel\'s strength against Jio in the circle and the state\'s income per head. Tiers: <b>'+tc[1]+'</b> invest now ('+INV.tiers.T1+'+), <b>'+tc[2]+'</b> high-potential ('+INV.tiers.T2+' to '+INV.tiers.T1+'), <b>'+tc[3]+'</b> selective ('+INV.tiers.T3+' to '+INV.tiers.T2+'), <b>'+tc[4]+'</b> defer (under '+INV.tiers.T3+').',
+      '<div class="wts">'+wk.map(function(k){ return '<i class="'+(k[2]==='m'?'c-share':'c-ws')+'" style="width:'+W[k[0]]+'%;opacity:'+(k[2]==='m'?0.55+W[k[0]]/45:0.6+W[k[0]]/50)+'" title="'+esc(k[1])+' '+W[k[0]]+'">'+W[k[0]]+'</i>'; }).join('')+'</div>'+
+      '<p class="tiny" style="margin:0 0 14px"><span class="sw-inline c-share"></span>Market, '+mw+': '+wk.filter(function(k){return k[2]==='m'}).map(function(k){return k[1]+' '+W[k[0]]}).join(' &middot; ')+'. <span class="sw-inline c-ws"></span>Ability to win, '+ww+': '+wk.filter(function(k){return k[2]==='w'}).map(function(k){return k[1]+' '+W[k[0]]}).join(' &middot; ')+'. Full rules in the Parameters tab.</p>'+
+      '<div class="tablewrap"><table class="dt"><thead><tr><th>#</th><th class="l">City</th><th class="l">Score</th><th>Tier</th><th>Market /'+mw+'</th><th>Win /'+ww+'</th><th>Unwired homes</th><th>Airtel vs Jio</th><th>Income per head</th><th>Wired Mbps</th><th class="l">Main rival</th><th></th></tr></thead><tbody>'+
+      shown.map(function(r,i){ return '<tr><td>'+(i+1)+'</td><td class="l">'+esc(r.city)+' <span class="tiny">'+esc(r.state)+'</span></td><td class="l"><span class="bar"><i style="width:'+r.score+'%"></i></span>'+r.score+'</td><td><span class="tier t'+r.tier+'">T'+r.tier+'</span></td><td>'+r.market+'</td><td>'+r.win+'</td><td>'+fmtIN(r.unwired)+'</td><td>'+r.airtel_vs_jio_all+'%</td><td>'+rs(r.nsdp)+'</td><td>'+(r.wired_mbps||'')+'</td><td class="l">'+esc(r.main_rival)+'</td><td><a class="act" data-slug="'+esc(r.slug)+'">map</a></td></tr>'; }).join('')+'</tbody></table></div>'+
+      '<button type="button" class="ghost" id="invall">'+(INV_ALL?'Show top 15':'Show all 100 cities')+'</button>'+
+      '<p class="tiny" style="margin-top:12px"><b>What moved from version 1:</b> up most, '+list(mv.slice(0,5).map(function(r){return r.city+' '+r.score_v1+' to '+r.score}))+'; down most, '+list(mv.slice(-5).reverse().map(function(r){return r.city+' '+r.score_v1+' to '+r.score}))+'. Income per head is a state average: it flatters Delhi\'s outer villages and understates rich pockets of poorer states.</p>');
+
+    /* 7. the plan */
+    var Q=INV.quota, mixTot=0; Object.keys(Q).forEach(function(k){ mixTot+=Q[k]; });
+    var rowsC=ac.map(function(r){ var segs=[]; Object.keys(Q).forEach(function(k){ if(r.mix[k]) segs.push({cls:STRAT[k].cls,v:r.mix[k],title:STRAT[k].name+': '+fmt(r.mix[k])+' passes'}); }); var s=byCity[r.city]; return {label:r.city,tier:r.tier,segs:segs,total:r.passes,value:fmt(r.passes)+' in '+r.localities+' loc.'+(s?'  '+String.fromCharCode(183)+'  vs '+s.main_rival:''),slug:r.slug}; });
+    var comp=[['Market-share capture','Share capture in contested areas','Localities 50 to 85% wired with gaps of '+INV.guards.pool_min+'+ homes, usually against slow lines','Lower: a rival is already selling','Usual','Price war with Jio or a regional operator'],
+      ['White-space expansion','White-space','Localities under half wired with '+INV.guards.pool_min+'+ unwired homes','Unknown: no rival, but no proof of demand either','Higher on the edge of town','Low income or hard access; ground-check each'],
+      ['New-area early mover','New-area early mover','Localities built mostly since 2015 (2020 in Gurugram) and not yet full','Highest if first: residents choose in their first weeks','Usual; builder and society tie-ups help','Builder exclusivity with a rival'],
+      ['High-return densification','','Next to Airtel\'s own fibre, where it passes homes but sells to few','Highest: brand and backbone already there','Lowest: backbone already paid for','Cannot be computed without Airtel\'s pass data']];
+    h+=sec('inv-plan','The plan','Three of the brief\'s strategies can be placed from public data; the fourth, densification, needs Airtel\'s own pass data and is why the last '+fmtIN(INV.phases[2].passes)+' passes are held back as a reserve.',
+      '<div class="mixbar">'+Object.keys(Q).map(function(k){ var m=STRAT[k]; return '<i class="c-'+m.cls+'" style="width:'+(100*Q[k]/mixTot)+'%"><span>'+m.name+' '+fmt(Q[k])+'</span></i>'; }).join('')+'</div>'+
+      '<div class="mixleg">'+Object.keys(Q).map(function(k){ var m=STRAT[k]; return '<span><i class="c-'+m.cls+'"></i><b>'+fmt(Q[k])+'</b> '+m.name+': '+m.why+'</span>'; }).join('')+'<span><i class="c-dens"></i><b>0</b> Densification: '+STRAT['Densification'].why+'</span></div>'+
+      '<div class="tablewrap" style="margin-top:16px"><table class="dt"><thead><tr><th class="l">Strategy</th><th>Passes</th><th class="l">Where</th><th class="l">Expected take-up</th><th class="l">Build cost</th><th class="l">Main risk</th></tr></thead><tbody>'+
+      comp.map(function(c){ return '<tr><td class="l"><b>'+c[0]+'</b></td><td>'+(c[1]?fmt(Q[c[1]]):'0 now')+'</td><td class="l" style="white-space:normal">'+c[2]+'</td><td class="l" style="white-space:normal">'+c[3]+'</td><td class="l" style="white-space:normal">'+c[4]+'</td><td class="l" style="white-space:normal">'+c[5]+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+      '<h4 class="ch" style="margin-top:20px">Allocation by city</h4><p class="sub">Bars are passes, coloured by strategy; the chip is the city\'s tier. Click a city to see its plan on the map.</p>'+hbar(rowsC,{aria:'Home passes allocated by city',left:270})+
+      '<p class="tiny">By state: '+st.map(function(x){return x.state+' '+fmt(x.passes)}).join(' &middot; ')+'.</p>');
+
+    /* 8. battlecards */
+    var bc=ac.slice(0,9).map(function(r){ var s=byCity[r.city]||{}, regs=(s.regionals||'').split('; ').filter(Boolean), mix=r.mix, top=Object.keys(mix).sort(function(a,b){return mix[b]-mix[a]})[0], jio=(100-s.airtel_vs_jio_all).toFixed(1);
+      var mb=s.wired_mbps||0, weak=[]; if(mb&&mb<60) weak.push('wired lines in the city run at a slow '+mb+' Mbps median'); else if(mb&&mb<100) weak.push('wired lines run at a middling '+mb+' Mbps median, so a 100 Mbps-plus offer still stands out'); else if(mb) weak.push('lines are already fast ('+mb+' Mbps median), so the weak spot is service and bundles, not speed'); if(s.jio_wireless_share>=50) weak.push(Math.round(s.jio_wireless_share)+'% of Jio\'s homes in this circle are on fixed wireless, which tests slower than fibre');
+      var lead=mb&&mb<100?'Speed: 100 Mbps fibre against '+mb+' Mbps lines':s.jio_wireless_share>=50?'Fibre reliability against Jio\'s wireless':'Converged bundles: mobile, broadband and streaming on one bill';
+      if(regs.indexOf('Excitel')>=0||regs.indexOf('ACT Fibernet')>=0) lead+='; do not chase '+(regs.indexOf('Excitel')>=0?'Excitel\'s &#8377;466 for 200 Mbps':'ACT\'s &#8377;549 entry')+' on price';
+      var prio=top==='White-space'?'New coverage':top==='New-area early mover'?'New coverage, fast: be first into the new blocks':'Acquisition: win switchers in the gaps';
+      var chan=r.tier===1&&(s.rank||99)<=10?'Own build, society and RWA tie-ups':'Cable-operator partners, where Airtel\'s model is already live';
+      var why=s.airtel_vs_jio_all>=50?'Airtel already leads Jio in this circle, so brand, backbone and partners are in place.':s.airtel_vs_jio_all>=40?'Airtel is close to Jio here ('+s.airtel_vs_jio_all+'% to '+jio+'%), so a dense fibre push can tip the balance.':'Airtel trails Jio here ('+s.airtel_vs_jio_all+'% to '+jio+'%); the case rests on the unwired pool and on fibre beating wireless, not on existing strength.';
+      return '<div class="card bc"><div class="bch"><h4>'+esc(r.city)+'</h4><span class="tier t'+r.tier+'">T'+r.tier+'</span></div><div class="tiny">'+esc(r.state)+' &middot; '+esc(s.circle)+' circle &middot; <b>'+fmt(r.passes)+'</b> passes in '+r.localities+' localities</div>'+
+        '<dl><dt>Main rival</dt><dd>'+esc(s.main_rival)+(s.main_rival==='Jio'?': '+jio+'% of Airtel and Jio home connections in the circle, Airtel '+s.airtel_vs_jio_all+'%':'')+'</dd>'+
+        '<dt>Also selling here</dt><dd>'+(regs.length?esc(regs.join(', ')):'No regional operator lists this city')+'</dd>'+
+        '<dt>Where the rival is weak</dt><dd>'+weak.join('; ')+'</dd><dt>Priority</dt><dd>'+prio+'</dd><dt>Lead with</dt><dd>'+lead+'</dd><dt>Channel</dt><dd>'+chan+'</dd><dt>Why Airtel can win</dt><dd>'+why+' Base case: about <b>'+fmt(r.subs36_base)+'</b> customers and '+rs(r.rev_month36_base)+' a month by month 36.</dd></dl></div>'; });
+    h+=sec('inv-battle','City battlecards','The nine largest blocks of passes. Rival strength is a circle figure, not a city one; speeds are the median of wired speed tests in the city, July to September 2026.','<div class="cards c3">'+bc.join('')+'</div>');
+
+    /* 9. localities */
+    var al=INV.alloc_loc.slice().sort(function(a,b){return b.passes-a.passes}).slice(0,20);
+    h+=sec('inv-localities','The first localities','The 20 largest blocks of passes out of '+INV.alloc_loc.length+'. Read them as catchments to survey, not build orders: outside Gurugram a name covers the nearest named place within 2 km. Phase shows when each is built.',
+      '<div class="tablewrap"><table class="dt"><thead><tr><th class="l">City</th><th class="l">Locality</th><th class="l">Strategy</th><th class="l">Phase</th><th>Passes</th><th>Homes</th><th class="l">Wired share</th><th>New share</th><th>Mobile-only devices</th><th></th></tr></thead><tbody>'+
+      al.map(function(a){ var m=STRAT[a.strategy]; return '<tr><td class="l">'+esc(a.city)+'</td><td class="l">'+esc(a.locality)+'</td><td class="l"><span class="badge" style="border-left:4px solid var(--st-'+m.cls+')">'+m.name+'</span></td><td class="l">'+esc(a.phase)+'</td><td>'+fmt(a.passes)+'</td><td>'+fmt(a.homes)+'</td><td class="l"><span class="bar m"><i style="width:'+a.wired_pct+'%"></i></span>'+a.wired_pct+'%</td><td>'+a.new_share+'%</td><td>'+a.mobile_only+'</td><td><a class="act" data-slug="'+esc(a.slug)+'" data-loc="'+esc(a.locality)+'">map</a></td></tr>'; }).join('')+'</tbody></table></div>'+
+      '<div class="callout">'+(INV.alloc_loc.some(function(a){return a.city==='Delhi'})?'Many of Delhi\'s passes go to outer villages such as Tikri Kalan and Ghevra, and Delhi scores well partly on the state\'s high income, which those villages are unlikely to share. ':'')+'Names ending in MIDC are industrial estates; their passes cover only the residential cells the checks kept. A locality with no mobile-only devices shows no demand signal, and the score does not yet penalise that.</div>');
+
+    /* 10. business case */
+    var I=F.inputs, fi=function(i,v){ return i.unit==='share'?pc(v*100,1):'&#8377;'+fmt(v); };
+    var cur=function(s){ return s.curve; }, xs=[]; for(var i=0;i<F.horizon;i++) xs.push(i+1);
+    var mx=Math.max.apply(null,U.curve), mnv=Math.min.apply(null,D.curve), step=1e9;
+    var ticks=[]; for(var t=Math.floor(mnv/step)*step;t<=mx+1;t+=step) ticks.push(t);
+    var cash=lineChart({x:xs,xlab:[[11,'Yr 1'],[35,'Yr 3'],[59,'Yr 5'],[83,'Yr 7'],[119,'Yr 10']],ticks:ticks,yfmt:function(v){return rs(v)},ymin:Math.floor(mnv/step)*step,ymax:Math.ceil(mx/step)*step,h:330,w:1000,l:84,r:20,aria:'Cumulative cash by scenario',
+      series:[{label:'Upside',color:'var(--st-share)',v:cur(U),marks:U.payback_month?[[U.payback_month-1,'pays back']]:[]},{label:'Base',color:'var(--accent)',v:cur(B),w:3.4,marks:B.payback_month?[[B.payback_month-1,'pays back']]:[]},{label:'Downside',color:'var(--muted)',v:cur(D),dash:'6 4'}]});
+    var rowsS=[['Customers at 12 months','subs12',fmt],['Customers at 24 months','subs24',fmt],['Customers at 36 months','subs36',fmt],['Revenue a month at month 36','rev_month36',rs],['Revenue in year 3','rev_year3',rs],['Contribution in year 3','contrib_year3',rs],['Network build (all passes)','net_capex',rs],['Connecting and replacing customers, 10 years','conn_capex',rs],['Peak funding needed','peak_funding',rs],['Cash after 5 years','cash60',rs],['Cash after 10 years','cash120',rs],['Payback','payback_month',function(v){return v?(v/12).toFixed(1)+' yrs':'none'}],['Return a year over 10 years','irr10',function(v){return v+'%'}]];
+    var stab='<div class="tablewrap"><table class="dt"><thead><tr><th class="l"></th><th>Downside</th><th>Base</th><th>Upside</th></tr></thead><tbody>'+rowsS.map(function(r){ return '<tr><td class="l">'+r[0]+'</td><td>'+r[2](D[r[1]])+'</td><td><b>'+r[2](B[r[1]])+'</b></td><td>'+r[2](U[r[1]])+'</td></tr>'; }).join('')+'</tbody></table></div>';
+    var itab='<div class="tablewrap"><table class="dt"><thead><tr><th class="l">Input</th><th>Downside</th><th>Base</th><th>Upside</th><th class="l">Where it comes from</th><th class="l">Status</th></tr></thead><tbody>'+I.map(function(i){ return '<tr><td class="l"><b>'+esc(i.name)+'</b></td><td>'+fi(i,i.down)+'</td><td><b>'+fi(i,i.base)+'</b></td><td>'+fi(i,i.up)+'</td><td class="l" style="white-space:normal;min-width:240px">'+esc(i.source)+'</td><td class="l" style="white-space:normal">'+esc(i.status)+'</td></tr>'; }).join('')+
+      '<tr><td class="l"><b>Customers per 100 passes, by age</b></td><td>'+F.ramp.down.slice(1).map(function(p){return Math.round(p[1]*100)}).join(' / ')+'</td><td><b>'+F.ramp.base.slice(1).map(function(p){return Math.round(p[1]*100)}).join(' / ')+'</b></td><td>'+F.ramp.up.slice(1).map(function(p){return Math.round(p[1]*100)}).join(' / ')+'</td><td class="l" style="white-space:normal">At 12 / 24 / 36 / 60 months after a pass is built; net of customers who leave. Only the 24-month point has a management source.</td><td class="l">Assumption shaped on a reported point</td></tr></tbody></table></div>';
+    var sens=F.sensitivity, sb=F.base_check, smax=Math.max.apply(null,sens.map(function(x){return Math.abs(x.irr10-sb.irr10)})), tw=1000, th=sens.length*30+24, tl=380, tmid=tl+(tw-tl-70)/2, tsc=((tw-tl-70)/2-70)/smax;
+    var tor='<svg class="chart" viewBox="0 0 '+tw+' '+th+'" role="img" aria-label="Sensitivity of the ten-year return">';
+    tor+='<line x1="'+tmid+'" y1="0" x2="'+tmid+'" y2="'+(th-18)+'" stroke="var(--ink)"/><text class="val" x="'+tmid+'" y="'+(th-4)+'" text-anchor="middle">base '+sb.irr10+'%</text>';
+    sens.forEach(function(x,i){ var d=x.irr10-sb.irr10, y=i*30+4, w=Math.abs(d)*tsc; tor+='<text class="lbl" x="'+(tl-12)+'" y="'+(y+16)+'" text-anchor="end">'+esc(x.label)+'</text><rect x="'+(d<0?tmid-w:tmid)+'" y="'+(y+4)+'" width="'+w+'" height="18" class="'+(d<0?'f-acc':'f-share')+'" rx="2"/><text class="val" x="'+(d<0?tmid+8:tmid+w+6)+'" y="'+(y+17)+'" text-anchor="start" style="fill:var(--ink)">'+x.irr10+'%'+(x.payback_month?'':' &middot; no payback')+'</text>'; });
+    tor+='</svg>';
+    var tk=F.takeup_curve, cr2=F.capex_range;
+    h+=sec('inv-money','Business case','Every input below is either reported by Airtel or named as an assumption. Passes are built evenly over the first 12 months; customers ramp with the age of each pass; the model runs ten years and counts nothing after, although fibre lasts longer.',
+      '<h4 class="ch">Inputs</h4>'+itab+
+      '<h4 class="ch" style="margin-top:18px">Results</h4>'+stab+'<h4 class="ch" style="margin-top:18px">Cumulative cash</h4>'+cash+'<p class="tiny">Cash goes negative while passes are built and customers are connected, then recovers as the base grows.</p>'+
+      '<h4 class="ch" style="margin-top:18px">What moves the return</h4>'+tor+
+      '<h4 class="ch" style="margin-top:14px">Take-up decides it</h4><div class="tablewrap"><table class="dt"><thead><tr><th class="l">Customers per 100 passes at 24 months</th>'+tk.map(function(x){ return '<th'+(Math.round(x.c24*100)===28?' class="hl"':'')+'>'+Math.round(x.c24*100)+'</th>'; }).join('')+'</tr></thead><tbody><tr><td class="l">Return a year over 10 years</td>'+tk.map(function(x){ return '<td'+(Math.round(x.c24*100)===28?' class="hl"':'')+'>'+x.irr10+'%</td>'; }).join('')+'</tr><tr><td class="l">Payback</td>'+tk.map(function(x){ return '<td'+(Math.round(x.c24*100)===28?' class="hl"':'')+'>'+(x.payback_month?(x.payback_month/12).toFixed(1)+' yrs':'none')+'</td>'; }).join('')+'</tr></tbody></table></div><p class="tiny">Everything else at the base case; 28 per 100 is the base.</p>'+
+      '<div class="callout" style="margin-top:12px"><b>How to read this.</b> At Airtel\'s own stated costs a pass takes about '+(B.payback_month/12).toFixed(1)+' years to pay back, which is consistent with Airtel\'s Homes business spending more on build than it earned in each of the last nine quarters. Take-up is the lever: each four extra customers per 100 passes adds about two to three points of annual return, and build cost is the risk: at &#8377;6,000 a pass the plan does not pay back inside ten years. The cost anchors in public sources disagree: the plan\'s build bill is '+rs(cr2.low)+' at &#8377;2,500 a pass, '+rs(cr2.mid)+' at the base, '+rs(cr2.high_allin)+' at the &#8377;8,500 all-in ceiling, and '+rs(cr2.high_press)+' at the &#8377;12,000 a 2022 press report quoted. Not counted: extra mobile revenue from converged customers, partner-built passes that cut build cost but share revenue, and any value after year ten.</div>');
+
+    /* 11. roadmap */
+    var PH=INV.phases, G=INV.gates, rw=1000, rh=170, rl=150, rinner=rw-rl-20, mo=function(m){ return rl+rinner*m/12; };
+    var rm='<svg class="chart" viewBox="0 0 '+rw+' '+rh+'" role="img" aria-label="Build phases and gates">';
+    for(var m2=0;m2<=12;m2+=2) rm+='<line class="grid" x1="'+mo(m2)+'" y1="8" x2="'+mo(m2)+'" y2="'+(rh-30)+'"/><text class="val" x="'+mo(m2)+'" y="'+(rh-12)+'" text-anchor="middle">M'+m2+'</text>';
+    PH.forEach(function(p,i){ var a=i*4, y=12+i*38, col=['var(--accent)','var(--st-new)','var(--st-share)'][i]; rm+='<text class="lbl" x="'+(rl-10)+'" y="'+(y+18)+'" text-anchor="end">'+esc(p.name)+'</text><rect x="'+mo(a)+'" y="'+(y+2)+'" width="'+(mo(a+4)-mo(a))+'" height="24" rx="5" style="fill:'+col+'"/><text x="'+(mo(a)+10)+'" y="'+(y+19)+'" style="font:600 12px var(--mono);fill:#fff">'+fmt(p.passes)+' passes &middot; '+p.cities.length+' cities</text>'; });
+    [[4,'Gate 1'],[8,'Gate 2'],[12,'Gate 3']].forEach(function(gt){ rm+='<path d="M'+mo(gt[0])+' '+(rh-36)+' l7 -9 l7 9 l-7 9 z" transform="translate(-7,0)" style="fill:var(--ink)"/>'; });
+    rm+='</svg>';
+    var kpi=[['Customers per 100 passes, Phase 1 localities','at least '+G.month6_per100+' by month 6 and '+G.month12_per100+' by month 12','Base-case ramp; Airtel\'s 28 to 30 by year two'],['Build cost per pass','at most &#8377;'+fmt(G.cost_ceiling),'Base cost plus 10%'],['Revenue per new customer','at least &#8377;470','Downside revenue in the business case'],['Share of new customers on converged plans','track; Airtel says about 60% of its adds','Airtel, Nov 2025'],['Competitor wired activity in planned localities','re-check each quarter','Ookla open data tiles'],['Airtel passes and customers by pincode','joined before Gate 2','Internal; unlocks densification']];
+    h+=sec('inv-roadmap','Execution roadmap','Three phases of four months. Phase 2 starts only if Phase 1 passes its gate; the Phase 3 reserve moves to densification or to the best-performing cities once Airtel\'s own data is joined.',
+      rm+'<div class="cards c3" style="margin-top:8px">'+PH.map(function(p,i){ return '<div class="card"><span class="tag">'+esc(p.when)+'</span><h4>'+esc(p.name)+': '+fmt(p.passes)+' passes</h4><p>'+p.localities+' localities in '+p.cities.length+' cities: '+esc(p.cities.slice(0,8).join(', '))+(p.cities.length>8?' and '+(p.cities.length-8)+' more':'')+'.</p><p class="tiny">'+['Highest-priority localities first.','Released if Phase 1 reaches '+G.month6_per100+' customers per 100 passes by month 6 at or under the cost ceiling.','Held back; re-allocated toward densification and the cities that convert fastest.'][i]+'</p></div>'; }).join('')+'</div>'+
+      '<h4 class="ch" style="margin-top:16px">Gates and monthly measures</h4><div class="tablewrap"><table class="dt"><thead><tr><th class="l">Measure</th><th class="l">Target</th><th class="l">Basis</th></tr></thead><tbody>'+kpi.map(function(k){ return '<tr><td class="l">'+k[0]+'</td><td class="l">'+k[1]+'</td><td class="l">'+k[2]+'</td></tr>'; }).join('')+'</tbody></table></div>');
+
+    /* 12. recommendation */
+    var acts=[['Approve Phase 1 now','Build '+fmt(PH[0].passes)+' passes in '+PH[0].localities+' localities across '+list(PH[0].cities.slice(0,6))+(PH[0].cities.length>6?' and '+(PH[0].cities.length-6)+' more':'')+', starting within 30 days.'],
+      ['Join Airtel\'s own data before Gate 2','Passes, active customers and installs per pincode, as counts. This is the single biggest improvement: it makes densification computable and replaces circle shares with Airtel\'s real position.'],
+      ['Sell fibre against wireless, not on price','Where Jio leans on AirFiber or lines run under 60 Mbps, lead with speed and reliability and converged plans; do not match &#8377;399 or &#8377;466 entry prices.'],
+      ['Use partners outside the metros','Build tier-2 cities through cable-operator partners (model live in '+fmt(M.airtel.lco_cities)+' cities) to cut build cost, the risk that breaks the business case.'],
+      ['Manage to the gate','Track customers per 100 passes by locality every month and move the reserve to whatever converts; stop any city that misses the month-6 gate.']];
+    var risks=['Jio extends non-line-of-sight AirFiber and prices aggressively in the plan\'s tier-2 cities.','Build costs come in nearer &#8377;6,000 than &#8377;2,900 a pass; the plan then does not pay back inside ten years.','Locality names outside Gurugram are 2 km catchments; some passes will land in non-residential or low-income pockets until ground-checked.','Income per head is a state average; Delhi\'s outer villages and UP\'s rich pockets are both mis-scored.','Revenue per home keeps falling as new customers join cheaper plans.'];
+    var decisions=['Is the 5 lakh extra money or a reallocation? It is about 6% of the 8 million-plus passes Airtel built in FY2026, under three weeks at its 2.5 million-a-quarter pace.','Approve access to pass and customer counts by pincode, internal only, no personal data.','Agree the phase gates and the state and city caps, or set different ones.'];
+    h+=sec('inv-recommend','Management recommendation','Five actions, the risks that could break the plan, and the decisions only leadership can take.',
+      '<div class="recs">'+acts.map(function(a,i){ return '<div class="rec"><span class="n">'+(i+1)+'</span><div><h4>'+a[0]+'</h4><p>'+a[1]+'</p></div></div>'; }).join('')+'</div>'+
+      '<div class="twocol" style="margin-top:18px"><div><h4 class="ch">Key risks</h4><ul class="plain">'+risks.map(function(r){return '<li>'+r+'</li>'}).join('')+'</ul></div><div><h4 class="ch">Decisions required</h4><ul class="check">'+decisions.map(function(r){return '<li>'+r+'</li>'}).join('')+'</ul></div></div>');
+
+    /* 13. still missing */
+    h+=sec('inv-gaps','What this still cannot see','Two of the four gaps in version 1 are now partly closed: competitors are named at circle level and unit costs are sourced. The rest need Airtel\'s own data.',
+      '<div class="cards">'+
+      '<div class="card"><span class="tag">Internal &middot; one access request</span><h4>Airtel passes, customers, installs per pincode</h4>The biggest gap. Splits every square into Airtel-passed-but-low-take-up (marketing money), well-sold (retention) and unpassed (build). Makes densification computable.</div>'+
+      '<div class="card"><span class="tag">Partly closed</span><h4>Competitor by name</h4>Now at circle level from the regulator. Nothing public below that; Airtel\'s win/loss and port-in data, or Ookla\'s paid product per tile, would close it.</div>'+
+      '<div class="card"><span class="tag">Partly closed</span><h4>What it costs and who signs up</h4>Airtel\'s stated $28-32 per pass and 28-30% take-up are in. Cost by building type, take-up by age of pass and churn are internal.</div>'+
+      '<div class="card"><span class="tag">Free &middot; one to two days</span><h4>What households can pay, below state level</h4>Property asking prices per locality (built for Gurugram), building height from the satellite layer, and district consumption from the 2023-24 household survey.</div></div>');
+
+    /* 14. evidence */
+    h+=sec('inv-evidence','Evidence',null,renderResearch());
+
+    /* 15. sources */
+    h+=sec('inv-sources','Sources and what to track monthly','The grid layers below plus the research above. None of it comes from Airtel\'s own systems.',
+      '<div class="tablewrap"><table class="dt src"><thead><tr><th class="l">Layer</th><th class="l">Source</th><th class="l">Period</th><th class="l">Status</th><th class="l">Confidence</th></tr></thead><tbody>'+
+      [['Industry, operators, circles','TRAI monthly releases (PR 125/2026) and quarterly reports','to Aug 2026','Regulator actuals','High; circle table is telephone lines, not broadband'],['Airtel and Jio','Company quarterly reports, investor decks and call transcripts','to Jun 2026','Company-reported','High; definitions differ (see Market)'],['Unit costs and take-up','Airtel management statements on calls','2022 to 2025','Reported, partly dated','Medium'],['People and homes','European settlement grid divided by Census 2011 household size','2025, projected','Modelled','Medium; about 10% under electricity meters in Gurugram'],['Buildings','Google Open Buildings','2023','Observed','High'],['Wired activity and speeds','Ookla open data, 600 m tiles; licence needed for commercial use','Apr 2025 to Sep 2026','Measured presence, not coverage','Medium'],['Income per head','State budget analysis (PRS) via a public table','2024-25','Reported, not checked against RBI','Medium'],['Locality names','OpenStreetMap places; Google Maps addresses in Gurugram','Oct 2026','Observed names','Low to medium outside Gurugram']].map(function(r){ return '<tr>'+r.map(function(x){ return '<td class="l">'+x+'</td>'; }).join('')+'</tr>'; }).join('')+'</tbody></table></div>'+
+      '<h4 class="ch" style="margin-top:16px">Track monthly</h4><ul class="check twocol" style="gap:4px 28px"><li>Customers per 100 passes by locality and age of pass.</li><li>Cost per pass against the ceiling.</li><li>The regulator\'s monthly operator and circle tables (next: end-September data, about 28 October).</li><li>Airtel and Jio quarterly results (Airtel on 5 November).</li><li>Wired-test devices per tile each quarter in planned localities.</li><li>New buildings and project registrations: the pipeline of new areas.</li></ul>'+
+      '<p class="tiny" style="margin-top:12px">Working files: out/strategy/ (scorecard, allocation by city and locality, state table) and out/research/ (every research finding and fact-check). Builders: scorecard_allocation.py, circles.py, business_case.py.</p>');
+
+    box.innerHTML=h;
+    Array.prototype.forEach.call(box.querySelectorAll('.chart g.click'),function(g){ g.addEventListener('click',function(){ jumpToLocality(g.getAttribute('data-slug'),null); }); });
+    Array.prototype.forEach.call(box.querySelectorAll('a.act'),function(a){ a.addEventListener('click',function(){ jumpToLocality(a.getAttribute('data-slug'),a.getAttribute('data-loc')); }); });
+    Array.prototype.forEach.call(box.querySelectorAll('.toc a'),function(a){ a.addEventListener('click',function(){ var el=document.getElementById(a.getAttribute('data-go')); if(el){ el.scrollIntoView({behavior:'smooth',block:'start'}); } }); });
+    var b=$('#invall'); if(b) b.addEventListener('click',function(){ INV_ALL=!INV_ALL; var y=$('#investview').scrollTop; drawInvest(); $('#investview').scrollTop=y; });
+  }
+  function renderResearch(){
+    var R=INV.research;
+    if(!R||!R.streams||!R.streams.length) return '<div class="callout">The research file is not available.</div>';
+    var tot={}; R.streams.forEach(function(s){ Object.keys(s.counts).forEach(function(k){ tot[k]=(tot[k]||0)+s.counts[k]; }); });
+    var n=0; Object.keys(tot).forEach(function(k){ n+=tot[k]; });
+    var h='<p class="sub">Seven research streams, each with a fact-checker who tried to refute its most important figures, then a final reviewer looking for gaps. <b>'+n+'</b> findings in all: '+['confirmed','corrected','unverified','refuted','not checked'].filter(function(k){return tot[k]}).map(function(k){ return '<span class="v '+k.replace(' ','')+'">'+tot[k]+' '+k+'</span>'; }).join(' ')+'. Fact-checkers tested the first 14 figures in each stream; the rest carry the researcher\'s own source and confidence.</p>';
+    R.streams.forEach(function(st){
+      h+='<details class="rs"><summary><b>'+esc(st.title)+'</b> <span class="tiny">'+st.findings.length+' findings</span> '+Object.keys(st.counts).map(function(k){ return '<span class="v '+k.replace(' ','')+'">'+st.counts[k]+' '+k+'</span>'; }).join(' ')+'</summary>'+
+        (st.narrative||'').split(/\n+/).map(function(p){ return '<p>'+esc(p)+'</p>'; }).join('')+
+        '<div class="tablewrap"><table class="dt"><thead><tr><th class="l">Metric</th><th class="l">Value</th><th class="l">Period</th><th class="l">Status</th><th class="l">Check</th><th class="l">Source</th></tr></thead><tbody>'+
+        st.findings.map(function(f){ var host=''; try{ host=new URL(f.source_url).hostname.replace(/^www\./,''); }catch(e){} return '<tr><td class="l" style="white-space:normal;min-width:220px">'+esc(f.metric)+'</td><td class="l" style="white-space:normal;min-width:200px">'+esc(f.value)+'</td><td class="l" style="white-space:normal">'+esc(f.period)+'</td><td class="l">'+esc(String(f.status).replace('_',' '))+' &middot; '+esc(f.confidence)+'</td><td class="l">'+(f.check?'<span class="v '+f.check+'">'+f.check+'</span>'+(f.check_value?' '+esc(f.check_value):''):'<span class="v notchecked">not checked</span>')+'</td><td class="l"><a href="'+esc(f.source_url)+'" target="_blank" rel="noopener">'+esc(host||'source')+'</a></td></tr>'; }).join('')+'</tbody></table></div>'+
+        (st.verify_summary?'<p class="tiny"><b>Fact-check:</b> '+esc(st.verify_summary)+'</p>':'')+(st.gaps&&st.gaps.length?'<p class="tiny"><b>Gaps the stream listed:</b> '+esc(st.gaps.join('; '))+'</p>':'')+'</details>';
+    });
+    if(R.critic){ var by={}; R.critic.missing.forEach(function(m){ (by[m.section]=by[m.section]||[]).push(m); });
+      h+='<details class="rs" open><summary><b>The final reviewer: what is still missing</b></summary>'+esc(R.critic.summary).split(/\n+/).map(function(p){return '<p>'+p+'</p>'}).join('')+
+        '<div class="tablewrap"><table class="dt"><thead><tr><th class="l">Section</th><th class="l">Missing</th><th class="l">Where it could come from</th></tr></thead><tbody>'+R.critic.missing.map(function(m){ return '<tr><td class="l">'+esc(m.section)+'</td><td class="l" style="white-space:normal;min-width:320px">'+esc(m.what)+'</td><td class="l" style="white-space:normal;min-width:260px">'+esc(m.where_to_get)+'</td></tr>'; }).join('')+'</tbody></table></div>'+
+        '<p class="tiny">One correction to the reviewer: its capex range of about &#8377;13 to 60 crore is ten times too small. 5,00,000 passes at &#8377;2,500 to &#8377;12,000 each is &#8377;125 to &#8377;600 crore.</p></details>'; }
+    return h;
+  }
+
+  /* ---------- parameters tab ---------- */
+  var PARAMS=[
+    ['Geometry','100 m square','The unit everything is counted in: a cell of the European settlement grid, permanent ID G100:row:col so internal counts can join later.','Built from the GHSL grid','100 m','2026-10-13','Structure','Files; the map shows 500 m cells'],
+    ['Geometry','500 m cell','25 squares summed, for drawing and for the Data tab.','Sum of squares','500 m','','Structure','Map, Data'],
+    ['Geometry','City circle','Radius by 2011 population tier: 35 km above 5 M people, 22 km above 2 M, 15 km above 1 M, 11 km above 500 k, else 9 km. Not a municipal boundary.','cities_top100.csv','City','','Structure','All'],
+    ['Geometry','Pull rule','A square reached by two circles belongs to the city with the larger square root of 2011 population divided by distance squared. Big cities keep suburbs, satellites keep cores.','run_top100.py','Square','','Structure','All'],
+    ['Geometry','Metro region','Member cities summed: Delhi NCR (6), Mumbai region (8), Kolkata (3), Pune (2), Chennai (2).','regions_summary.csv','Region','','Structure','Files, document'],
+    ['Geometry','Locality','Name of the area a square sits in: a named OpenStreetMap area, else the sector in the nearest Google listing address within 450 m (Gurugram), else the nearest OpenStreetMap place within 2 km (all cities).','OpenStreetMap place nodes; Google Maps addresses for Gurugram','Square','Oct 2026','Observed names, nearest-place assignment','Map labels, hover, locality list, Data'],
+    ['Geometry','Urban extent','A square flagged inside or outside the urban settlement classes (21 and above) of the GHSL settlement model; city totals are also given on the urban extent only. Added by a parallel session.','GHSL settlement model','Square','2025 layer','Modelled','Hover, header chips, Data'],
+    ['Homes and people','People 2025','People per square from the GHSL population layer, which spreads census counts over buildings by volume. The 2025 layer is projected from 2018 imagery.','GHSL R2023A, GHS-POP E2025','100 m','2025 (projected)','Modelled','All'],
+    ['Homes and people','People 2015','Same layer, 2015 epoch.','GHS-POP E2015','100 m','2015','Modelled','Growth'],
+    ['Homes and people','Homes','People 2025 divided by the state average household size from Census 2011 (Haryana 4.9, Uttar Pradesh 5.4, Tamil Nadu 3.9, Karnataka 4.4). Hubli-Dharwad and Tirunelveli use buildings x 1.1 because the population layer under-counts them.','Derived','100 m','2025','Modelled, anchored to census','All'],
+    ['Homes and people','Buildings','Count of Google building points in the square, with footprint area and confidence kept in the files.','Google Open Buildings v3','Building','2023 imagery','Observed','All'],
+    ['Homes and people','New 100 m squares since 2015','Squares with no built-up area in the 2015 layer and some in the 2025 layer.','GHS-BUILT-S 2015 vs 2025','100 m','2015 to 2025 (projected)','Modelled','All'],
+    ['Homes and people','People growth 2015-25 %','People 2025 over people 2015, minus one.','Derived','City','','Modelled','City table, national view'],
+    ['Homes and people','Electricity meters (Gurugram)','Domestic electricity connections, the best current household anchor: Gurugram district 571,808 in 2024-25, up 4.5% in a year; two DHBVN circles 598,838 at April 2026 plus 390 bulk-domestic society connections; about 2,750 new domestic connections a month. Our grid estimate for the district is 0.89 of the meter count.','Statistical Abstract of Haryana; DHBVN monthly statistics','District, circle','2024-25, Apr 2026','Official counts','Files, document'],
+    ['Yearly growth (Gurugram)','Buildings 2016 to 2023','Buildings per square for each year, from Google\'s yearly building rasters, summed exactly from 0.5 m pixels. Single years wobble (2019 down 5%, 2023 up 11%); use 3-year windows.','Google Open Buildings 2.5D Temporal','100 m','2016 to 2023','Observed','Gurugram map layers, hover, Data'],
+    ['Yearly growth (Gurugram)','New 2020 to 2023, New 2016 to 2023','Difference of the yearly counts, floored at zero.','Derived','500 m','','Observed','Gurugram map layers, locality list'],
+    ['Yearly growth (Gurugram)','First year built','First year a square shows at least one building in the yearly series.','Derived','100 m','2016 to 2023','Observed','Files'],
+    ['Wired-line signal (Ookla)','Wired devices','Distinct devices that ran a speed test on Wi-Fi or cable in the 600 m Ookla tile at the cell centre, July to September 2026.','Ookla open data, fixed tiles','600 m','Jul-Sep 2026','Measured presence of tests, not coverage','Map layer, hover, Data'],
+    ['Wired-line signal (Ookla)','Wired Mbps','Average download speed of those tests in the tile.','Ookla open data','600 m','Jul-Sep 2026','Measured','Map layer, hover, Data'],
+    ['Wired-line signal (Ookla)','Mobile devices','Distinct devices that tested on a mobile signal in the tile.','Ookla open data, mobile tiles','600 m','Jul-Sep 2026','Measured','Hover, Data'],
+    ['Wired-line signal (Ookla)','Mobile-only','Mobile test devices in tiles that had no wired test at all: a crowd with no wire seen.','Derived','600 m','Jul-Sep 2026','Measured','Map layer'],
+    ['Wired-line signal (Ookla)','Wired share %','Homes in tiles with 3 or more wired-test devices divided by all homes. Three devices is a household pattern; one could be a visitor or a hotspot. Wi-Fi can also come from a wireless box, so this is presence of wired-type use, not cable coverage.','Derived','City, locality','Jul-Sep 2026','Measured presence','City table, header, national sort'],
+    ['Wired-line signal (Ookla)','Wired devices by quarter','The same device count for each of six quarters from April 2025 to September 2026.','Ookla open data, six files','600 m','Apr 2025 to Sep 2026','Measured','Hover, Data'],
+    ['Wired-line signal (Ookla)','First wired quarter','First quarter in which the tile reached 3 or more wired-test devices; never if it has not.','Derived','600 m','','Measured','Map layer, Data'],
+    ['Wired-line signal (Ookla)','Newly wired since Apr 25','Tiles with no wired test in April to June 2025 that have 3 or more devices now.','Derived','600 m','','Measured','Map layer'],
+    ['Wired-line signal (Ookla)','Change since Apr 25 (pt)','Wired share in the latest quarter minus the first, in points. Quarter-to-quarter noise is 2 to 3 points in most cities; only moves of 3 or more are called a trend.','Derived','City','','Measured','City table, national sort'],
+    ['Wired-line signal (Ookla)','Homes outside wired-tested tiles','Homes in tiles with no wired test at all: the first-wire pool, as the public data sees it.','Derived','City','Jul-Sep 2026','Measured presence','City table, strategy'],
+    ['Wired-line signal (Ookla)','Wired-test devices per 100 homes','Wired-test devices divided by homes, times 100, and the same for April to June 2025. Added by a parallel session.','Derived','City','','Measured','Header chips, national sort'],
+    ['Speed by city (M-Lab)','M-Lab Mbps','Median of daily median download speed from the open M-Lab test network, located by IP address, so city level only. The public files stop on 26 March 2024.','M-Lab public statistics','City','2023 to Mar 2024','Measured, city level','City table, hover, national sort'],
+    ['Speed by city (M-Lab)','M-Lab 2022 and 2023','Full-year medians where both years exist (89 cities).','M-Lab public statistics','City','2022, 2023','Measured','Hover'],
+    ['Strategy','Play','One of six verdicts: Build (open market, unwired pool of 1 lakh homes or fast growth), Expand edge (contested and growing above 18%), Fill gaps (contested, steady), Switch attack (saturated but median wired line under 60 Mbps), Hold and upsell (saturated, lines at 60 Mbps or better), Watch (open but small and slow).','strategy_table.csv','City','','Judgement, thresholds explicit','City table'],
+    ['Strategy','Crowding, momentum, line quality','Crowding: open under 60% wired share, contested 60 to 85, saturated above 85. Momentum: fast at 18% growth or more, steady at 10 or more, else slow. Line quality: slow under 60 Mbps, fast above 100.','Derived','City','','Judgement','Files, document'],
+    ['Strategy','Wiring priority (Gurugram)','Per square: homes scaled to the meter count, times the chance of no wire (0.9 with no wired test, 0.5 with one or two devices, 0.2 under ten, else 0.08), times a pay weight (1.0 at or above the city median price per sq ft, 0.7 below), plus 0.8 times observed new homes 2020 to 2023. Summed by locality.','gurugram_wiring_priority.csv','Square, locality','','Public proxy score; Airtel columns replace the proxies','Files'],
+    ['Pipeline (Gurugram)','RERA projects','Every registered project in Gurugram district from the state register, with stage: under construction (registered, completion ahead), validity ended (the register never marks completed), lapsed or withdrawn. 506 residential projects under construction; unit counts not yet extracted.','Haryana RERA via the reale.in mirror, cross-checked against the authority\'s own list','Project, sector','Oct 2026','Register','Files, document'],
+    ['Identity (Gurugram)','DIGIPIN','India Post\'s open 10-character grid code for any point, accurate to about 4 m, computed offline and verified against India Post\'s example. On every Gurugram square and building.','Computed','Point','','Deterministic','Files'],
+    ['Identity (Gurugram)','Price per sq ft','Median asking price from property-portal snippets in a Google search per locality; a figure counts only if its snippet names that locality and no other sector.','Google search via SerpApi','Locality','Oct 2026','Asking prices, 100 localities with 3+ figures','Files, priority score'],
+    ['Strategy','Locality verdict','Seven labels per locality, from its own cells. Too small: under 200 homes. New area, wire early: new share at or above 25% of buildings since 2020 (Gurugram) or 12% of 100 m squares since 2015 (other cities), under 85% wired, 200 or more unwired homes. Build, open: under 50% wired and 500 or more unwired homes. Fill gaps: 50 to 85% wired and 500 or more unwired homes. Switch, slow lines: 85% or more wired and under 60 Mbps. Hold, wired: 85% or more wired. Else Watch.','Derived in the page','Locality','Jul-Sep 2026','Rule-based','Data tab, insights box'],
+    ['Strategy','Unwired homes','Homes in cells whose 600 m tile had fewer than 3 wired-test devices in the latest quarter: the first-wire pool. Summed from the cells to locality, city and state; the Data tab sorts every level by it.','Derived','State, city, locality, cell','Jul-Sep 2026','Measured presence','Data tab (all levels), Where to wire map layer, insights box'],
+    ['Strategy','New share %','Gurugram: new buildings 2020 to 2023 divided by buildings 2023. Other cities: new 100 m squares since 2015 divided by all 100 m squares in the locality.','Derived','Locality','','Observed (Gurugram) or modelled','Data tab, insights box'],
+    ['Strategy','Mobile-only devices','Mobile speed-test devices in cells with no wired test at all: a crowd that wants bandwidth where no wire is seen.','Derived','Locality','Jul-Sep 2026','Measured','Data tab, insights box'],
+    ['Overview and plan','City score','Eight components scaled 0 to 1 and weighted: pool size 30 (log of unwired homes against the largest pool), open share 10 (unwired share, full marks at 60%), growth 15 (people 2015 to 2025, full at 40%), new build 10 (share of 100 m squares built since 2015, full at 25%), density 10 (homes per occupied 500 m cell, full at 1,500), slow incumbents 10 (full where 60%+ wired and under 60 Mbps, half at 60 to 100 Mbps), mobile-only demand 5 (share of cells with mobile tests and no wired test, full at 15%), competitor urgency 5 (wired share up 3+ points since Apr 2025). Tiers: 60+ invest now, 50 to 60 high-potential, 40 to 50 selective, under 40 defer.','scorecard_allocation.py','City','Jul-Sep 2026','Rule-based; pay and Airtel presence reserved for v2','Overview and plan'],
+    ['Overview and plan','Pool guards','A home counts toward a pool only if its cell lies inside the built-up urban extent, its tile shows at least one speed test of any kind, and the cell has at most 15 homes per building. Cells failing these are silent: no evidence of people, or industrial land. 32 lakh homes are left out this way.','scorecard_allocation.py','100 m / 500 m','','Rule-based','Overview and plan, state table'],
+    ['Overview and plan','5 lakh allocation','Localities with a Build, New-area or Fill-gaps verdict and 500+ unwired homes (200+ for new areas) are ranked by city score times pool size times new-build share, with a bonus for open and new areas, and filled into three buckets: white-space 2,00,000, new areas 1,25,000, share capture 1,75,000; passes equal unwired homes; no city above 50,000; any shortfall is filled from the best remaining localities. Densification is 0 until Airtel passes are joined.','scorecard_allocation.py','Locality','Jul-Sep 2026','Rule-based','Overview and plan'],
+    ['Overview and plan','Payback grid','Months to payback = (build cost per pass + take-up x connect cost) divided by (take-up x monthly revenue x margin), shown for three build costs and three take-up rates at placeholder revenue, margin and connect cost. Illustrative only until sourced figures replace the placeholders.','scorecard_allocation.py','Plan','','Modelled, placeholders','Overview and plan'],
+    ['Strategy','Insights box','Plain-English bullets above each table, computed from the same rows the table shows: pools, plays, newest areas, early-mover bets, mobile crowds, who is wiring now, slow lines.','Derived in the page','City, locality, cell','','Rule-based','Data tab']
+  ];
+  function renderParams(){
+    var pc=$('#pcontent'); if(pc.getAttribute('data-done')) return; pc.setAttribute('data-done','1');
+    var groups=[]; PARAMS.forEach(function(p){ if(groups.indexOf(p[0])<0) groups.push(p[0]); });
+    var html='<p class="lead kv" style="font-size:13px;color:var(--ink)">Every number in this app, what it means, where it comes from, and whether it was observed or modelled. Columns marked modelled are estimates anchored to official totals; columns marked measured presence show where something was seen, not full coverage.</p>';
+    groups.forEach(function(g){ html+='<h2>'+g+'</h2><div class="tablewrap"><table class="dt"><thead><tr><th>Parameter</th><th>What it means and how it is made</th><th>Source</th><th>Grain</th><th>Period</th><th>Status</th><th>Where it appears</th></tr></thead><tbody>'+PARAMS.filter(function(p){return p[0]===g}).map(function(p){ return '<tr><td><b>'+p[1]+'</b></td><td>'+p[2]+'</td><td>'+p[3]+'</td><td>'+p[4]+'</td><td>'+p[5]+'</td><td>'+p[6]+'</td><td>'+p[7]+'</td></tr>'; }).join('')+'</tbody></table></div>'; });
+    pc.innerHTML=html;
+  }
+
+  var INVP=fetch('data/strategy.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(j){ INV=j; if(current){ renderHead(current); if(current._rows&&metric==='plan') drawCells(current); } }).catch(function(){});
+  fetch('data/index.json',{cache:'no-cache'}).then(function(r){return r.json()}).then(function(ix){
+    INDEX=ix; cities=ix.cities; var t=ix.totals_urban||ix.totals;
+    $('#tiles').innerHTML='<div class="tile"><b>'+fmtIN(t.homes)+'</b><span>homes</span></div><div class="tile"><b>'+fmtIN(t.buildings)+'</b><span>buildings</span></div><div class="tile"><b>'+fmtIN(t.people)+'</b><span>people, 2025 est.</span></div><div class="tile"><b>'+fmtIN(t.new_cells)+'</b><span>new 100 m squares</span></div>'+(ix.totals_urban?'<div class="tile" style="grid-column:1/-1"><span>Totals on the urban extent (settlement classes 21+). Whole circles: '+fmtIN(ix.totals.homes)+' homes, '+fmtIN(ix.totals.people)+' people.</span></div>':'');
+    renderList();
+    var h=(location.hash||'').replace('#','');
+    if(h && cities.some(function(c){return c.slug===h})){ showTab('map'); openCity(h); } else { drawNational(); showTab('invest'); }
+  }).catch(function(){ $('#list').innerHTML='<div style="padding:16px;color:var(--muted)">Could not load the city index.</div>'; });
+  window.addEventListener('hashchange',function(){ var h=(location.hash||'').replace('#',''); if(!h&&current) drawNational(); else if(h&&(!current||current.slug!==h)) openCity(h); });
+})();
+</script>
