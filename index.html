@@ -1,5 +1,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
 <title>India Homes Grid</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&display=swap">
 <style>
@@ -399,7 +400,7 @@ table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700}
       if(d[0]-dl<b[0][0]) b[0][0]=d[0]-dl; if(d[1]-dg<b[0][1]) b[0][1]=d[1]-dg; if(d[0]+dl>b[1][0]) b[1][0]=d[0]+dl; if(d[1]+dg>b[1][1]) b[1][1]=d[1]+dg;
     });
     cellLayer=g.addTo(map);
-    if(!c._fitted&&document.body.getAttribute('data-tab')==='map'){ map.invalidateSize(); map.fitBounds(b,{padding:[20,20]}); c._fitted=true; }
+    if(!c._fitted&&document.body.getAttribute('data-tab')==='map'){ map.invalidateSize(); map.fitBounds(b,{padding:[20,20]}); c._fitted=true; setTimeout(function(){ if(current===c){ map.invalidateSize(); map.fitBounds(b,{padding:[20,20]}); } },300); }
     if(plan){ var P=planFor(c), byS={}, tot=0; P.forEach(function(a){ byS[a.strategy]=(byS[a.strategy]||0)+a.passes; tot+=a.passes; });
       $('#legend').innerHTML='<div class="t">The plan for '+c.city+': <b>'+fmt(tot)+'</b> passes in '+P.length+' localities</div>'+Object.keys(byS).map(function(k){ return '<div style="margin:3px 0"><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+css(STRAT_COL[k])+';vertical-align:-2px;margin-right:6px"></i>'+STRAT[k].name+' <b>'+fmt(byS[k])+'</b></div>'; }).join('')+'<div style="margin-top:4px;color:var(--muted)">Solid = the unwired homes to pass; faint = the rest of the locality. Click a locality in the list to zoom.</div>';
       return; }
