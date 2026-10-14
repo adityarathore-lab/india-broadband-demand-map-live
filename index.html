@@ -299,6 +299,8 @@ table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700}
     }).catch(function(){});
   }
   drawIndia();
+  /* street map on top where the browser allows outside images (local server, GitHub Pages); the Claude viewer blocks them and shows our own background instead */
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,pane:'basemap',attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
   function drawRoads(c){
     if(roadLayer){ map.removeLayer(roadLayer); roadLayer=null; }
     var use=function(b){ if(current!==c) return; roadLayer=L.layerGroup(); var W=[3.2,2.4,1.6,1.0], C=[css('--road-major'),css('--road-major'),css('--road'),css('--road')];
