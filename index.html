@@ -238,7 +238,7 @@ table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700}
 @media (prefers-reduced-motion:reduce){ .leaflet-zoom-anim .leaflet-zoom-animated{transition:none} }
 </style>
 
-<nav id="topbar"><span class="t">India Homes Grid</span><button type="button" data-tab="invest" class="on">Overview and plan</button><button type="button" data-tab="map">Map</button><button type="button" data-tab="data">Data</button><button type="button" data-tab="params">Parameters</button><span class="kv">Free public data &middot; observed and modelled marked everywhere</span></nav>
+<nav id="topbar"><span class="t">India Homes Grid</span><button type="button" data-tab="map" class="on">Map</button><button type="button" data-tab="data">Data</button><button type="button" data-tab="params">Parameters</button><button type="button" data-tab="invest">Overview and plan</button><span class="kv">Free public data &middot; observed and modelled marked everywhere</span></nav>
 <div id="app">
   <aside id="rail">
     <div id="railhead">
@@ -277,7 +277,7 @@ table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 (function(){
-  document.body.setAttribute('data-tab','invest');
+  document.body.setAttribute('data-tab','map');
   var INDEX=null, cities=[], map, baseLayer, cityLayer=null, cellLayer=null, labelLayer=null, hiLayer=null, current=null, metric='homes', tileFails=0;
   var $=function(s){return document.querySelector(s)}; var css=function(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()};
   function fmtIN(n){ n=+n||0; if(n>=1e7) return (n/1e7).toFixed(2).replace(/\.?0+$/,'')+' cr'; if(n>=1e5) return (n/1e5).toFixed(1).replace(/\.0$/,'')+' L'; return n.toLocaleString('en-IN'); }
@@ -1045,7 +1045,7 @@ table.dt th.hl,table.dt td.hl{background:var(--soft);font-weight:700}
     $('#tiles').innerHTML='<div class="tile"><b>'+fmtIN(t.homes)+'</b><span>homes</span></div><div class="tile"><b>'+fmtIN(t.buildings)+'</b><span>buildings</span></div><div class="tile"><b>'+fmtIN(t.people)+'</b><span>people, 2025 est.</span></div><div class="tile"><b>'+fmtIN(t.new_cells)+'</b><span>new 100 m squares</span></div>'+(ix.totals_urban?'<div class="tile" style="grid-column:1/-1"><span>Totals on the urban extent (settlement classes 21+). Whole circles: '+fmtIN(ix.totals.homes)+' homes, '+fmtIN(ix.totals.people)+' people.</span></div>':'');
     renderList();
     var h=(location.hash||'').replace('#','');
-    if(h && cities.some(function(c){return c.slug===h})){ showTab('map'); openCity(h); } else { drawNational(); showTab('invest'); }
+    if(h && cities.some(function(c){return c.slug===h})){ showTab('map'); openCity(h); } else { drawNational(); showTab('map'); }
   }).catch(function(){ $('#list').innerHTML='<div style="padding:16px;color:var(--muted)">Could not load the city index.</div>'; });
   window.addEventListener('hashchange',function(){ var h=(location.hash||'').replace('#',''); if(!h&&current) drawNational(); else if(h&&(!current||current.slug!==h)) openCity(h); });
 })();
